@@ -1,0 +1,18 @@
+# Rider / JetBrains
+.idea/
+*.sln.iml
+
+# .NET
+bin/
+obj/
+
+# Node
+node_modules/
+dist/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
