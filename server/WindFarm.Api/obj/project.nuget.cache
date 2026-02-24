@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "QV4a52BGOkE=",
+  "dgSpecHash": "Yd87kYq0pxI=",
   "success": true,
-  "projectFilePath": "C:\\Users\\luisc\\RiderProjects\\windfarm-iot\\server\\WindFarm.Api\\WindFarm.Api.csproj",
+  "projectFilePath": "C:\\Users\\luisc\\RiderProjects\\windmill-iot-fullstack\\server\\WindFarm.Api\\WindFarm.Api.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\luisc\\.nuget\\packages\\hivemqtt\\0.30.0\\hivemqtt.0.30.0.nupkg.sha512",
     "C:\\Users\\luisc\\.nuget\\packages\\microsoft.aspnetcore.authentication.jwtbearer\\10.0.3\\microsoft.aspnetcore.authentication.jwtbearer.10.0.3.nupkg.sha512",
@@ -43,9 +43,9 @@
       "code": "NU1603",
       "level": "Warning",
       "message": "StateleSSE.AspNetCore 3.1.0 depends on StackExchange.Redis (>= 2.6.0 && < 3.0.0) but StackExchange.Redis 2.6.0 was not found. StackExchange.Redis 2.6.45 was resolved instead.",
-      "projectPath": "C:\\Users\\luisc\\RiderProjects\\windfarm-iot\\server\\WindFarm.Api\\WindFarm.Api.csproj",
+      "projectPath": "C:\\Users\\luisc\\RiderProjects\\windmill-iot-fullstack\\server\\WindFarm.Api\\WindFarm.Api.csproj",
       "warningLevel": 1,
-      "filePath": "C:\\Users\\luisc\\RiderProjects\\windfarm-iot\\server\\WindFarm.Api\\WindFarm.Api.csproj",
+      "filePath": "C:\\Users\\luisc\\RiderProjects\\windmill-iot-fullstack\\server\\WindFarm.Api\\WindFarm.Api.csproj",
       "libraryId": "StackExchange.Redis",
       "targetGraphs": [
         "net10.0"
@@ -55,9 +55,9 @@
       "code": "NU1904",
       "level": "Warning",
       "message": "Package 'System.Drawing.Common' 5.0.0 has a known critical severity vulnerability, https://github.com/advisories/GHSA-rxg9-xrhp-64gj",
-      "projectPath": "C:\\Users\\luisc\\RiderProjects\\windfarm-iot\\server\\WindFarm.Api\\WindFarm.Api.csproj",
+      "projectPath": "C:\\Users\\luisc\\RiderProjects\\windmill-iot-fullstack\\server\\WindFarm.Api\\WindFarm.Api.csproj",
       "warningLevel": 1,
-      "filePath": "C:\\Users\\luisc\\RiderProjects\\windfarm-iot\\server\\WindFarm.Api\\WindFarm.Api.csproj",
+      "filePath": "C:\\Users\\luisc\\RiderProjects\\windmill-iot-fullstack\\server\\WindFarm.Api\\WindFarm.Api.csproj",
       "libraryId": "System.Drawing.Common",
       "targetGraphs": [
         "net10.0"

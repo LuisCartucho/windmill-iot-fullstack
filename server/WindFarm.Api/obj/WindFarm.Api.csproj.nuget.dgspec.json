@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\luisc\\RiderProjects\\windfarm-iot\\server\\WindFarm.Api\\WindFarm.Api.csproj": {}
+    "C:\\Users\\luisc\\RiderProjects\\windmill-iot-fullstack\\server\\WindFarm.Api\\WindFarm.Api.csproj": {}
   },
   "projects": {
-    "C:\\Users\\luisc\\RiderProjects\\windfarm-iot\\server\\WindFarm.Api\\WindFarm.Api.csproj": {
+    "C:\\Users\\luisc\\RiderProjects\\windmill-iot-fullstack\\server\\WindFarm.Api\\WindFarm.Api.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\luisc\\RiderProjects\\windfarm-iot\\server\\WindFarm.Api\\WindFarm.Api.csproj",
+        "projectUniqueName": "C:\\Users\\luisc\\RiderProjects\\windmill-iot-fullstack\\server\\WindFarm.Api\\WindFarm.Api.csproj",
         "projectName": "WindFarm.Api",
-        "projectPath": "C:\\Users\\luisc\\RiderProjects\\windfarm-iot\\server\\WindFarm.Api\\WindFarm.Api.csproj",
+        "projectPath": "C:\\Users\\luisc\\RiderProjects\\windmill-iot-fullstack\\server\\WindFarm.Api\\WindFarm.Api.csproj",
         "packagesPath": "C:\\Users\\luisc\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\luisc\\RiderProjects\\windfarm-iot\\server\\WindFarm.Api\\obj\\",
+        "outputPath": "C:\\Users\\luisc\\RiderProjects\\windmill-iot-fullstack\\server\\WindFarm.Api\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
           "C:\\Users\\luisc\\AppData\\Roaming\\NuGet\\NuGet.Config"
