@@ -1,5 +1,6 @@
 # Rider / JetBrains
 .idea/
+**/.idea/
 *.sln.iml
 
 # .NET
