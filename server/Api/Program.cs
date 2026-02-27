@@ -17,7 +17,7 @@ builder.Configuration.AddEnvironmentVariables();
 
 builder.Services.AddMqttControllers();
 builder.Services.AddControllers();
-
+builder.Services.AddOpenApiDocument();
 builder.Services.AddDbContext<WindFarmDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("db"))
 );
@@ -38,6 +38,8 @@ var app = builder.Build();
 
 app.UseCors("dev");
 app.MapControllers();
+app.UseOpenApi();
+app.UseSwaggerUi();
 
 // Connect MQTT (TCP)
 var mqtt = app.Services.GetRequiredService<IMqttClientService>();
