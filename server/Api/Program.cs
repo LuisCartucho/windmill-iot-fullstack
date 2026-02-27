@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using DotNetEnv;
-using WindFarm.Api.DataAccess;
+using Infrastructure.Postgres.Scaffolding;
 using Mqtt.Controllers;
 
 var env = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Development";

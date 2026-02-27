@@ -1,4 +1,7 @@
-﻿namespace WindFarm.Api.DataAccess.Entities;
+﻿using System;
+using System.Collections.Generic;
+
+namespace efscaffold.Entities;
 
 public partial class Farm
 {

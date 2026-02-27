@@ -1,7 +1,7 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using efscaffold.Entities;
+using Infrastructure.Postgres.Scaffolding;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using WindFarm.Api.DataAccess;
-using WindFarm.Api.DataAccess.Entities;
 
 namespace WindFarm.Api.Controllers;
 

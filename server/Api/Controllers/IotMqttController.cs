@@ -1,7 +1,7 @@
 ﻿using System.Text.Json;
+using efscaffold.Entities;
+using Infrastructure.Postgres.Scaffolding;
 using Mqtt.Controllers;
-using WindFarm.Api.DataAccess;
-using WindFarm.Api.DataAccess.Entities;
 using WindFarm.Api.DTOs;
 
 namespace WindFarm.Api.Controllers;
