@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-
-namespace efscaffold.Entities;
+﻿namespace DataAccess.Entities;
 
 public partial class User
 {

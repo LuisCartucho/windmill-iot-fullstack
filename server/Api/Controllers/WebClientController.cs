@@ -1,9 +1,9 @@
-﻿using efscaffold.Entities;
-using Infrastructure.Postgres.Scaffolding;
+﻿using DataAccess;
+using DataAccess.Entities;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore; 
+using Microsoft.EntityFrameworkCore;
 
-namespace WindFarm.Api.Controllers;
+namespace Api.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]

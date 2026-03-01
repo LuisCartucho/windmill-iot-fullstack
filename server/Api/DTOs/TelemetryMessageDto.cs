@@ -1,4 +1,4 @@
-﻿namespace WindFarm.Api.DTOs;
+﻿namespace Api.DTOs;
 
 public class TelemetryMessageDto
 {

@@ -1,6 +1,6 @@
+using DataAccess;
 using Microsoft.EntityFrameworkCore;
 using DotNetEnv;
-using Infrastructure.Postgres.Scaffolding;
 using Mqtt.Controllers;
 
 var env = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Development";

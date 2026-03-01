@@ -1,10 +1,10 @@
 ﻿using System.Text.Json;
-using efscaffold.Entities;
-using Infrastructure.Postgres.Scaffolding;
+using Api.DTOs;
+using DataAccess;
+using DataAccess.Entities;
 using Mqtt.Controllers;
-using WindFarm.Api.DTOs;
 
-namespace WindFarm.Api.Controllers;
+namespace Api.Controllers;
 
 public class IotMqttController(
     ILogger<IotMqttController> logger,

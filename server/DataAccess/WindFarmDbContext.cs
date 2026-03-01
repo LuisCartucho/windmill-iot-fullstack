@@ -1,7 +1,7 @@
-﻿using Microsoft.EntityFrameworkCore;
-using efscaffold.Entities;
+﻿using DataAccess.Entities;
+using Microsoft.EntityFrameworkCore;
 
-namespace Infrastructure.Postgres.Scaffolding;
+namespace DataAccess;
 
 public partial class WindFarmDbContext : DbContext
 {
