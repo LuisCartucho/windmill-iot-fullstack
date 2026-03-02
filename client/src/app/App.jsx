@@ -13,26 +13,30 @@ function RequireAuth({ children }) {
 }
 
 const router = createBrowserRouter([
-    // If someone hits "/", require auth
+    // ✅ Public
+    { path: "/login", element: <Login /> },
+
+    // ✅ Protected app ONLY under /app/*
     {
+        path: "/app/*",
         element: (
             <RequireAuth>
                 <Shell />
             </RequireAuth>
         ),
         children: [
-            { path: "/", element: <Monitor /> },
-            { path: "/control", element: <Control /> },
-            { path: "/alerts", element: <Alerts /> },
-            { path: "/history", element: <ActionHistory /> },
+            { index: true, element: <Monitor /> },          // /app
+            { path: "control", element: <Control /> },      // /app/control
+            { path: "alerts", element: <Alerts /> },        // /app/alerts
+            { path: "history", element: <ActionHistory /> } // /app/history
         ],
     },
 
-    // Login route (public)
-    { path: "/login", element: <Login /> },
+    // redirect root to /app
+    { path: "/", element: <Navigate to="/app" replace /> },
 
-    // Any unknown route -> go home
-    { path: "*", element: <Navigate to="/" replace /> },
+    // unknown -> login
+    { path: "*", element: <Navigate to="/login" replace /> },
 ]);
 
 export default function App() {

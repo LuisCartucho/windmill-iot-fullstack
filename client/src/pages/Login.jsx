@@ -17,23 +17,59 @@ export default function Login() {
                 body: JSON.stringify({ username, password }),
             });
             localStorage.setItem("token", res.token);
-            nav("/control");
+            nav("/app/control"); // <-- adjust if your protected routes are /app/...
         } catch (e2) {
             setErr(e2.message);
         }
     }
 
     return (
-        <form onSubmit={onSubmit} className="card" style={{ maxWidth: 420, padding: 16, borderRadius: 22 }}>
-            <h2 style={{ marginTop: 0 }}>Login</h2>
-            <div className="muted" style={{ marginBottom: 12 }}>Commands require authentication.</div>
+        <div className="min-h-screen w-full grid place-items-center bg-[#0b0c0e] p-6">
+            <div className="w-full max-w-[420px] rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl shadow-2xl p-7">
+                <div className="mx-auto mb-4 h-11 w-11 rounded-xl grid place-items-center border border-emerald-400/25 bg-emerald-400/10 text-emerald-400">
+                    <span className="text-lg">≋</span>
+                </div>
 
-            <div style={{ display: "grid", gap: 10 }}>
-                <input className="input" value={username} onChange={(e) => setUsername(e.target.value)} placeholder="username" />
-                <input className="input" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="password" type="password" />
-                <button className="btn btn-green" type="submit">Login</button>
-                {err && <div style={{ color: "#ff7a7a" }}>{err}</div>}
+                <div className="text-center">
+                    <div className="text-white/90 font-semibold text-lg">FS+IoT Corporate™</div>
+                    <div className="text-white/55 text-xs mt-1">Windmill Inspection Centre</div>
+                </div>
+
+                <form onSubmit={onSubmit} className="mt-6 flex flex-col gap-4">
+                    <label className="form-control w-full">
+                        <div className="label py-0 mb-1">
+                            <span className="label-text text-[10px] tracking-[0.14em] text-white/45">USERNAME</span>
+                        </div>
+                        <input
+                            className="input w-full bg-white/5 border-white/10 text-white placeholder-white/30 focus:border-emerald-400/50 focus:outline-none"
+                            value={username}
+                            onChange={(e) => setUsername(e.target.value)}
+                            placeholder="username"
+                            autoComplete="username"
+                        />
+                    </label>
+
+                    <label className="form-control w-full">
+                        <div className="label py-0 mb-1">
+                            <span className="label-text text-[10px] tracking-[0.14em] text-white/45">PASSWORD</span>
+                        </div>
+                        <input
+                            className="input w-full bg-white/5 border-white/10 text-white placeholder-white/30 focus:border-emerald-400/50 focus:outline-none"
+                            type="password"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            placeholder="••••••••"
+                            autoComplete="current-password"
+                        />
+                    </label>
+
+                    <button type="submit" className="btn btn-success w-full rounded-xl text-white font-semibold">
+                        Sign In
+                    </button>
+
+                    {err && <div className="text-center text-sm text-red-400">{err}</div>}
+                </form>
             </div>
-        </form>
+        </div>
     );
 }
