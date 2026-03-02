@@ -1,4 +1,9 @@
-export default function Sidebar({ turbines, selected, onSelect }) {
+export default function Sidebar({
+                                    turbines,
+                                    selected,
+                                    onSelect,
+                                    latestByTurbine,
+                                }) {
     return (
         <aside className="h-full p-5 border-r border-base-300/40 bg-base-100">
             {/* Header */}
@@ -13,10 +18,20 @@ export default function Sidebar({ turbines, selected, onSelect }) {
                 OFFSHORE TURBINES
             </div>
 
-            {/* Turbine list - show all names*/}
             <div className="flex flex-col gap-2">
                 {turbines.map((t) => {
                     const active = t.id === selected;
+
+                    const latest = latestByTurbine?.[t.id];
+                    const kw =
+                        latest?.powerOutput != null
+                            ? Math.round(latest.powerOutput)
+                            : null;
+
+                    const wind =
+                        latest?.windSpeed != null
+                            ? latest.windSpeed.toFixed(1)
+                            : null;
 
                     return (
                         <button
@@ -28,21 +43,27 @@ export default function Sidebar({ turbines, selected, onSelect }) {
                                 active ? "border-success/40 bg-success/10" : "",
                             ].join(" ")}
                         >
+                            {/* Top Row */}
                             <div className="flex items-center justify-between">
                                 <div className="font-semibold">{t.name}</div>
 
-                                {/* Status dot */}
-                                <div className="flex items-center gap-2">
-                                    <span className="w-2.5 h-2.5 rounded-full bg-success shadow-[0_0_0_4px_rgba(34,197,94,0.15)]" />
-                                </div>
+                                <span className="w-2.5 h-2.5 rounded-full bg-success shadow-[0_0_0_4px_rgba(34,197,94,0.15)]" />
                             </div>
 
-                            <div className="mt-1 text-xs text-base-content/50">ID: {t.id}</div>
+                            {/* ID */}
+                            <div className="mt-1 text-xs text-base-content/50">
+                                ID: {t.id}
+                            </div>
 
-                            {/* Right aligned KW  */}
-                            <div className="mt-3 flex justify-end text-xs font-semibold text-base-content/50">
-                                {/* later replace with live powerOutput */}
-                                — kW
+                            {/* Wind + Power */}
+                            <div className="mt-3 flex items-center justify-between text-xs font-semibold">
+                                <div className="text-base-content/50">
+                                    {wind != null ? `Wind: ${wind} m/s` : "Wind: —"}
+                                </div>
+
+                                <div className="text-base-content/70">
+                                    {kw != null ? `${kw} kW` : "— kW"}
+                                </div>
                             </div>
                         </button>
                     );

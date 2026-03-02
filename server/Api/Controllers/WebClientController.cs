@@ -26,6 +26,7 @@ public class WebClientController(WindFarmDbContext db) : ControllerBase
         return await q
             .OrderByDescending(t => t.Timestamp)
             .Take(take)
+            .OrderBy(t => t.Timestamp)
             .ToListAsync();
     }
 

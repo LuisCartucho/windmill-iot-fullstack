@@ -1,10 +1,11 @@
 import { NavLink } from "react-router";
 import { Activity, Settings2, AlertTriangle, History } from "lucide-react";
 
-function TabLink({ to, Icon, label }) {
+function TabLink({ to, Icon, label, end = false }) {
     return (
         <NavLink
             to={to}
+            end={end}
             className={({ isActive }) =>
                 [
                     "h-full px-4 flex items-center gap-2",
@@ -25,10 +26,10 @@ function TabLink({ to, Icon, label }) {
 export default function Tabs() {
     return (
         <div className="h-[56px] px-5 flex items-end gap-1 bg-base-100/30 border-b border-base-300/20">
-            <TabLink to="/" Icon={Activity} label="Monitor" />
-            <TabLink to="/control" Icon={Settings2} label="Control" />
-            <TabLink to="/alerts" Icon={AlertTriangle} label="Alerts" />
-            <TabLink to="/history" Icon={History} label="Action History" />
+            <TabLink to="/app/monitor" Icon={Activity} label="Monitor" />
+            <TabLink to="/app/control" Icon={Settings2} label="Control" />
+            <TabLink to="/app/alerts" Icon={AlertTriangle} label="Alerts" />
+            <TabLink to="/app/history" Icon={History} label="Action History" />
             <div className="flex-1" />
         </div>
     );
