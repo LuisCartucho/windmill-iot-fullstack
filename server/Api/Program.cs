@@ -1,3 +1,4 @@
+using Api.Services;
 using DataAccess;
 using Microsoft.EntityFrameworkCore;
 using DotNetEnv;
@@ -33,6 +34,8 @@ builder.Services.AddCors(options =>
             .AllowCredentials();
     });
 });
+
+builder.Services.AddScoped<AuthService>();
 
 var app = builder.Build();
 

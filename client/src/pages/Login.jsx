@@ -4,8 +4,8 @@ import { useNavigate } from "react-router";
 
 export default function Login() {
     const nav = useNavigate();
-    const [username, setUsername] = useState("admin");
-    const [password, setPassword] = useState("Password123!");
+    const [username, setUsername] = useState("");
+    const [password, setPassword] = useState("");
     const [err, setErr] = useState("");
 
     async function onSubmit(e) {

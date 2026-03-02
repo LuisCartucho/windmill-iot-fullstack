@@ -1,8 +1,26 @@
 import { useNavigate } from "react-router";
 import { LogOut } from "lucide-react";
 
+function getNicknameFromToken() {
+    const token = localStorage.getItem("token");
+    if (!token) return null;
+
+    try {
+        const payload = JSON.parse(atob(token.split(".")[1]));
+        return payload.nickname || payload.unique_name || payload.sub || null;
+    } catch {
+        return null;
+    }
+}
+
 export default function Topbar() {
     const nav = useNavigate();
+    const nickname = getNicknameFromToken();
+
+    function logout() {
+        localStorage.removeItem("token");
+        nav("/login", { replace: true });
+    }
 
     return (
         <header className="h-[72px] w-full px-6 flex items-center bg-base-100/40 backdrop-blur-md border-b border-base-300/20">
@@ -19,14 +37,17 @@ export default function Topbar() {
 
                 {/* Operator */}
                 <div className="text-sm text-base-content/60">
-                    Operator: <span className="font-bold text-base-content">admin</span>
+                    Operator:{" "}
+                    <span className="font-bold text-base-content">
+                        {nickname ?? "unknown"}
+                    </span>
                 </div>
 
-                {/* Logout icon*/}
+                {/* Logout icon */}
                 <button
                     className="btn btn-sm btn-ghost rounded-full"
                     title="Logout"
-                    onClick={() => nav("/login")}
+                    onClick={logout}
                 >
                     <LogOut size={18} className="opacity-80" />
                 </button>
