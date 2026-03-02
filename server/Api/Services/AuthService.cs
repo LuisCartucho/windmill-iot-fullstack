@@ -40,7 +40,12 @@ public class AuthService(WindFarmDbContext db, IConfiguration config)
         if (await db.Users.AnyAsync(u => u.Id == id))
             return "admin already exists";
 
-        var (saltB64, hashB64) = HashPassword("Password123!");
+        // Read from env/config so it's not hardcoded in git
+        var pwd = config["SeedAdmin__Password"];
+        if (string.IsNullOrWhiteSpace(pwd))
+            return "SeedAdmin__Password missing in env/config";
+
+        var (saltB64, hashB64) = HashPassword(pwd);
 
         db.Users.Add(new User
         {
@@ -51,7 +56,7 @@ public class AuthService(WindFarmDbContext db, IConfiguration config)
         });
 
         await db.SaveChangesAsync();
-        return "Created admin / Password123!";
+        return "Created admin user";
     }
 
     private static (string saltB64, string hashB64) HashPassword(string password)
