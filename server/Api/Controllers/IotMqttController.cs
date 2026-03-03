@@ -22,7 +22,7 @@ public class IotMqttController(
             Id = Guid.NewGuid(),
             FarmId = farmId,
             TurbineId = turbineId,
-            Timestamp = msg.Timestamp,
+            Timestamp = msg.Timestamp == default ? DateTime.UtcNow : msg.Timestamp,
 
             WindSpeed = msg.WindSpeed,
             WindDirection = msg.WindDirection,

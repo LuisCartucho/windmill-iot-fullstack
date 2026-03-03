@@ -1,59 +1,75 @@
-import React, { useEffect, useMemo, useState } from "react";
+import { createContext, useEffect, useState } from "react";
 import { Outlet } from "react-router";
 import Sidebar from "./Sidebar";
 import Topbar from "./Topbar";
 import Tabs from "./Tabs";
+import type { Telemetry } from "../generated-ts-client";
 
-const API = import.meta.env.VITE_API_BASE;
+const API_BASE = "http://localhost:5117";
 
-const TURBINES = [
+type TurbineInfo = {
+    id: string;
+    name: string;
+};
+
+type SelectedTurbineContextValue = {
+    selected: string | null;
+    setSelected: (id: string | null) => void;
+};
+
+export const SelectedTurbine = createContext<SelectedTurbineContextValue>({
+    selected: null,
+    setSelected: () => {},
+});
+
+const TURBINES: TurbineInfo[] = [
     { id: "turbine-alpha", name: "Alpha" },
     { id: "turbine-beta", name: "Beta" },
     { id: "turbine-gamma", name: "Gamma" },
     { id: "turbine-delta", name: "Delta" },
 ];
 
-export const SelectedTurbine = React.createContext({
-    selected: null,
-    setSelected: () => {},
-});
+type LatestByTurbine = Record<string, Telemetry | null>;
 
 export default function Shell() {
-    const [selected, setSelected] = useState(null);
-    const [latestByTurbine, setLatestByTurbine] = useState({});
+    const [selected, setSelected] = useState<string | null>(null);
+    const [latestByTurbine, setLatestByTurbine] = useState<LatestByTurbine>({});
 
     useEffect(() => {
         let alive = true;
 
-        async function loadLatest() {
+        const loadLatest = async () => {
             try {
                 const results = await Promise.all(
-                    TURBINES.map(async (t) => {
-                        const res = await fetch(
-                            `${API}/api/webclient/telemetry?turbineId=${encodeURIComponent(t.id)}&take=1`
-                        );
+                    TURBINES.map(async (t): Promise<[string, Telemetry | null]> => {
+                        const url = `${API_BASE}/api/webclient/telemetry?turbineId=${encodeURIComponent(
+                            t.id
+                        )}&take=1`;
+
+                        const res = await fetch(url);
                         if (!res.ok) return [t.id, null];
-                        const arr = await res.json();
-                        return [t.id, arr?.[0] ?? null];
+
+                        const arr = (await res.json()) as Telemetry[];
+                        return [t.id, Array.isArray(arr) ? (arr[0] ?? null) : null];
                     })
                 );
 
                 if (!alive) return;
 
-                const next = {};
+                const next: LatestByTurbine = {};
                 for (const [id, row] of results) next[id] = row;
                 setLatestByTurbine(next);
             } catch {
                 // ignore
             }
-        }
+        };
 
         loadLatest();
-        const interval = setInterval(loadLatest, 5000);
+        const interval = window.setInterval(loadLatest, 5000);
 
         return () => {
             alive = false;
-            clearInterval(interval);
+            window.clearInterval(interval);
         };
     }, []);
 
