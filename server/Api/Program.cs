@@ -1,8 +1,8 @@
 using Api;
 using Api.Services;
 using DataAccess;
-using Microsoft.EntityFrameworkCore;
 using DotNetEnv;
+using Microsoft.EntityFrameworkCore;
 using Mqtt.Controllers;
 using StateleSSE.AspNetCore;
 using StateleSSE.AspNetCore.GroupRealtime;
@@ -47,8 +47,10 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("dev", policy =>
     {
-        policy
-            .WithOrigins("http://localhost:5173")
+        policy.WithOrigins(
+                "http://localhost:5173",
+                "https://client-windmill.fly.dev"
+            )
             .AllowAnyHeader()
             .AllowAnyMethod()
             .AllowCredentials();
@@ -59,15 +61,31 @@ builder.Services.AddScoped<AuthService>();
 
 var app = builder.Build();
 
+// --- middleware order matters ---
+app.UseRouting();
+
 app.UseCors("dev");
-app.MapControllers();
+
+// If/when you add auth, keep these here:
+// app.UseAuthentication();
+// app.UseAuthorization();
+
+// Swagger is fine here
 app.UseOpenApi();
 app.UseSwaggerUi();
 
-// Connect MQTT (TCP)
+app.MapControllers();
+
+// Connect MQTT (TCP) - best effort so API can still start
 var mqtt = app.Services.GetRequiredService<IMqttClientService>();
-await mqtt.ConnectAsync("broker.hivemq.com", 1883);
-app.GenerateApiClientsFromOpenApi("../../client/src/generated-ts-client.ts", "./openapi.json")
-    .GetAwaiter().GetResult();
+try
+{
+    await mqtt.ConnectAsync("broker.hivemq.com", 1883);
+    Console.WriteLine("MQTT connected.");
+}
+catch (Exception ex)
+{
+    Console.WriteLine($"MQTT connect failed (API will still run): {ex.Message}");
+}
 
 app.Run();

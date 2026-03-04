@@ -1,17 +1,23 @@
-FROM mcr.microsoft.com/dotnet/sdk:10.0-alpine AS build
+﻿# ---------- BUILD ----------
+FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
-COPY ["./", "."]
-RUN dotnet publish "Api.csproj" \
-    -c Release \
-    -o /app/publish \
-    --runtime linux-musl-x64 \
-    --self-contained true \
-    /p:PublishSingleFile=true
 
-FROM mcr.microsoft.com/dotnet/runtime-deps:10.0-alpine
+# copy csproj first for restore cache
+COPY Api/Api.csproj Api/
+COPY DataAccess/DataAccess.csproj DataAccess/
+RUN dotnet restore Api/Api.csproj
+
+# copy everything and publish
+COPY . .
+RUN dotnet publish Api/Api.csproj -c Release -o /app/publish --no-restore
+
+# ---------- RUNTIME ----------
+FROM mcr.microsoft.com/dotnet/aspnet:10.0-alpine AS final
 WORKDIR /app
-COPY --from=build /app/publish .
+
 ENV ASPNETCORE_URLS=http://0.0.0.0:8080
+ENV ASPNETCORE_ENVIRONMENT=Production
 EXPOSE 8080
 
-ENTRYPOINT ["./Api"]
+COPY --from=build /app/publish .
+ENTRYPOINT ["dotnet", "Api.dll"]

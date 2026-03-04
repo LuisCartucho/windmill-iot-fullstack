@@ -6,9 +6,10 @@ import {
     type RealtimeListenResponseOfListOfAlert,
 } from "../generated-ts-client";
 
-const API_BASE = "http://localhost:5117";
-const sse = new StateleSSEClient(`${API_BASE}/api/WebClient/sse`);
-const restClient = new WebClientClient(API_BASE);
+type RealtimeResponse = RealtimeListenResponseOfListOfAlert;
+
+// IMPORTANT: Set this in .env.development and .env.production
+const API_BASE = import.meta.env.VITE_API_BASE as string | undefined;
 
 export function useRealtimeAlerts(
     farmId?: string,
@@ -18,9 +19,25 @@ export function useRealtimeAlerts(
     const [alerts, setAlerts] = useState<Alert[]>([]);
 
     useEffect(() => {
+        if (!API_BASE) {
+            console.error(
+                "VITE_API_BASE is missing. Set it in .env.production and rebuild/redeploy."
+            );
+            return;
+        }
+
+        const sse = new StateleSSEClient(`${API_BASE}/api/webclient/sse`);
+        const restClient = new WebClientClient(API_BASE);
+
         return sse.listen(
             async (connectionId) => {
-                const result = await restClient.getAlerts(connectionId, farmId ?? null, turbineId ?? null, take);
+                const result = await restClient.getAlerts(
+                    connectionId,
+                    farmId ?? null,
+                    turbineId ?? null,
+                    take
+                );
+
                 setAlerts(result.data ?? []);
                 return result;
             },
@@ -30,7 +47,7 @@ export function useRealtimeAlerts(
                     return;
                 }
 
-                const maybe = payload as RealtimeListenResponseOfListOfAlert;
+                const maybe = payload as RealtimeResponse;
                 if (Array.isArray(maybe?.data)) {
                     setAlerts(maybe.data);
                 }

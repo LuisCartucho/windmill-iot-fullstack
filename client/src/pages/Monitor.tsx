@@ -1,6 +1,6 @@
-import { useContext } from "react";
+import { useContext, useMemo } from "react";
 import { SelectedTurbine } from "../layout/Shell";
-import { useRealtimeTelemetry } from "../hooks/useTelemetry";
+import { useTurbineTelemetry } from "../hooks/useTelemetry";
 import {
     LineChart,
     Line,
@@ -12,9 +12,26 @@ import {
 } from "recharts";
 
 export default function Monitor() {
-    const { selected } = useContext(SelectedTurbine);
+    const { selected, farmId } = useContext(SelectedTurbine);
+    const telemetry = useTurbineTelemetry(farmId ?? undefined, selected ?? undefined, 500);
 
-    const telemetry = useRealtimeTelemetry(undefined, selected ?? undefined, 200);
+    // Convert timestamp → numeric time, sort, dedupe, and keep a rolling window
+    const data = useMemo(() => {
+        const mapped = telemetry
+            .map((t: any) => ({ ...t, ts: Date.parse(t.timestamp) }))
+            .filter((t: any) => Number.isFinite(t.ts))
+            .sort((a: any, b: any) => a.ts - b.ts);
+
+        // Dedupe by timestamp (keep the last sample for each ts)
+        const byTs = new Map<number, any>();
+        for (const row of mapped) byTs.set(row.ts, row);
+        const deduped = Array.from(byTs.values()).sort((a, b) => a.ts - b.ts);
+
+        // Rolling window: last 5 minutes (change if you want)
+        const WINDOW_MS = 5 * 60 * 1000;
+        const cutoff = Date.now() - WINDOW_MS;
+        return deduped.filter((d) => d.ts >= cutoff);
+    }, [telemetry]);
 
     if (!selected) {
         return (
@@ -30,32 +47,60 @@ export default function Monitor() {
         <div className="grid grid-cols-2 gap-4">
             <Chart title="Wind Speed (m/s)">
                 <ResponsiveContainer width="100%" height={240}>
-                    <LineChart data={telemetry}>
+                    <LineChart data={data}>
                         <CartesianGrid strokeDasharray="3 3" opacity={0.15} />
+
                         <XAxis
-                            dataKey="timestamp"
+                            dataKey="ts"
+                            type="number"
+                            domain={["dataMin", "dataMax"]}
                             tick={{ fontSize: 10 }}
-                            tickFormatter={(v) => (v ? new Date(v).toLocaleTimeString() : "")}
+                            tickFormatter={(v) => new Date(v).toLocaleTimeString()}
                         />
-                        <YAxis domain={[0, 25]} />
-                        <Tooltip labelFormatter={(v) => new Date(v).toLocaleTimeString()} />
-                        <Line type="monotone" dataKey="windSpeed" dot={false} strokeWidth={2} isAnimationActive={false} />
+
+                        <YAxis domain={["auto", "auto"]} />
+
+                        <Tooltip
+                            labelFormatter={(v) => new Date(Number(v)).toLocaleTimeString()}
+                        />
+
+                        <Line
+                            type="linear"
+                            dataKey="windSpeed"
+                            dot={false}
+                            strokeWidth={2}
+                            isAnimationActive={false}
+                        />
                     </LineChart>
                 </ResponsiveContainer>
             </Chart>
 
             <Chart title="Power Output (kW)">
                 <ResponsiveContainer width="100%" height={240}>
-                    <LineChart data={telemetry}>
+                    <LineChart data={data}>
                         <CartesianGrid strokeDasharray="3 3" opacity={0.15} />
+
                         <XAxis
-                            dataKey="timestamp"
+                            dataKey="ts"
+                            type="number"
+                            domain={["dataMin", "dataMax"]}
                             tick={{ fontSize: 10 }}
-                            tickFormatter={(v) => (v ? new Date(v).toLocaleTimeString() : "")}
+                            tickFormatter={(v) => new Date(v).toLocaleTimeString()}
                         />
-                        <YAxis domain={[0, 3000]} />
-                        <Tooltip labelFormatter={(v) => new Date(v).toLocaleTimeString()} />
-                        <Line type="monotone" dataKey="powerOutput" dot={false} strokeWidth={2} isAnimationActive={false} />
+
+                        <YAxis domain={["auto", "auto"]} />
+
+                        <Tooltip
+                            labelFormatter={(v) => new Date(Number(v)).toLocaleTimeString()}
+                        />
+
+                        <Line
+                            type="linear"
+                            dataKey="powerOutput"
+                            dot={false}
+                            strokeWidth={2}
+                            isAnimationActive={false}
+                        />
                     </LineChart>
                 </ResponsiveContainer>
             </Chart>
