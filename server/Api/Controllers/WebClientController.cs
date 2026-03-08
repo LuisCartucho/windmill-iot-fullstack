@@ -15,6 +15,9 @@ public class WebClientController(
     WindFarmDbContext db
 ) : RealtimeControllerBase(backplane)
 {
+    // ----------------------------
+    // 1) INITIAL HISTORY (list)
+    // ----------------------------
     // GET /api/webclient/telemetry?farmId=...&turbineId=...&take=200
     [HttpGet(nameof(GetTelemetry))]
     public async Task<RealtimeListenResponse<List<Telemetry>>> GetTelemetry(
@@ -24,47 +27,19 @@ public class WebClientController(
         int take = 200)
     {
         take = Math.Clamp(take, 1, 500);
-
-        // Group name includes filters so different pages don't overwrite each other
-        var group = $"telemetry:{farmId ?? "all"}:{turbineId ?? "all"}";
+        
+        var group = $"telemetry:init:{farmId ?? "all"}:{turbineId ?? "all"}";
         await backplane.Groups.AddToGroupAsync(connectionId, group);
 
-        // Subscribe: whenever Telemetry changes, push a new snapshot to the client
-        realtimeManager.Subscribe<WindFarmDbContext>(
-            connectionId,
-            group,
-            criteria: snap => snap.HasChanges<Telemetry>(),
-            query: async ctx =>
-            {
-                var q = ctx.Telemetries.AsNoTracking();
-
-                if (!string.IsNullOrWhiteSpace(farmId))
-                    q = q.Where(t => t.FarmId == farmId);
-
-                if (!string.IsNullOrWhiteSpace(turbineId))
-                    q = q.Where(t => t.TurbineId == turbineId);
-
-                // Return latest N (descending), then reorder ascending for charts
-                var latest = await q
-                    .OrderByDescending(t => t.Timestamp)
-                    .Take(take)
-                    .ToListAsync();
-
-                return latest
-                    .OrderBy(t => t.Timestamp)
-                    .ToList();
-            });
-
-        // Initial snapshot immediately returned to UI (same ordering as chart needs)
-        var initialQ = db.Telemetries.AsNoTracking();
+        var q = db.Telemetries.AsNoTracking();
 
         if (!string.IsNullOrWhiteSpace(farmId))
-            initialQ = initialQ.Where(t => t.FarmId == farmId);
+            q = q.Where(t => t.FarmId == farmId);
 
         if (!string.IsNullOrWhiteSpace(turbineId))
-            initialQ = initialQ.Where(t => t.TurbineId == turbineId);
+            q = q.Where(t => t.TurbineId == turbineId);
 
-        var initialLatest = await initialQ
+        var initialLatest = await q
             .OrderByDescending(t => t.Timestamp)
             .Take(take)
             .ToListAsync();
@@ -86,7 +61,79 @@ public class WebClientController(
     {
         take = Math.Clamp(take, 1, 500);
 
-        var group = $"alerts:{farmId ?? "all"}:{turbineId ?? "all"}";
+        var group = $"alerts:init:{farmId ?? "all"}:{turbineId ?? "all"}";
+        await backplane.Groups.AddToGroupAsync(connectionId, group);
+
+        var q = db.Alerts.AsNoTracking();
+
+        if (!string.IsNullOrWhiteSpace(farmId))
+            q = q.Where(a => a.FarmId == farmId);
+
+        if (!string.IsNullOrWhiteSpace(turbineId))
+            q = q.Where(a => a.TurbineId == turbineId);
+
+        var initial = await q
+            .OrderByDescending(a => a.Timestamp)
+            .Take(take)
+            .ToListAsync();
+
+        return new RealtimeListenResponse<List<Alert>>(group, initial);
+    }
+    // ----------------------------
+    // REALTIME UPDATES
+    // ----------------------------
+
+    [HttpGet(nameof(GetTelemetryLatest))]
+    public async Task<RealtimeListenResponse<Telemetry?>> GetTelemetryLatest(
+        string connectionId,
+        string? farmId,
+        string? turbineId)
+    {
+        var group = $"telemetry:latest:{farmId ?? "all"}:{turbineId ?? "all"}";
+        await backplane.Groups.AddToGroupAsync(connectionId, group);
+
+        realtimeManager.Subscribe<WindFarmDbContext>(
+            connectionId,
+            group,
+            criteria: snap => snap.HasChanges<Telemetry>(),
+            query: async ctx =>
+            {
+                var q = ctx.Telemetries.AsNoTracking();
+
+                if (!string.IsNullOrWhiteSpace(farmId))
+                    q = q.Where(t => t.FarmId == farmId);
+
+                if (!string.IsNullOrWhiteSpace(turbineId))
+                    q = q.Where(t => t.TurbineId == turbineId);
+
+                return await q
+                    .OrderByDescending(t => t.Timestamp)
+                    .FirstOrDefaultAsync();
+            });
+
+        // initial "latest one"
+        var initialQ = db.Telemetries.AsNoTracking();
+
+        if (!string.IsNullOrWhiteSpace(farmId))
+            initialQ = initialQ.Where(t => t.FarmId == farmId);
+
+        if (!string.IsNullOrWhiteSpace(turbineId))
+            initialQ = initialQ.Where(t => t.TurbineId == turbineId);
+
+        var initial = await initialQ
+            .OrderByDescending(t => t.Timestamp)
+            .FirstOrDefaultAsync();
+
+        return new RealtimeListenResponse<Telemetry?>(group, initial);
+    }
+
+    [HttpGet(nameof(GetAlertLatest))]
+    public async Task<RealtimeListenResponse<Alert?>> GetAlertLatest(
+        string connectionId,
+        string? farmId,
+        string? turbineId)
+    {
+        var group = $"alerts:latest:{farmId ?? "all"}:{turbineId ?? "all"}";
         await backplane.Groups.AddToGroupAsync(connectionId, group);
 
         realtimeManager.Subscribe<WindFarmDbContext>(
@@ -105,11 +152,9 @@ public class WebClientController(
 
                 return await q
                     .OrderByDescending(a => a.Timestamp)
-                    .Take(take)
-                    .ToListAsync();
+                    .FirstOrDefaultAsync();
             });
 
-        // Initial snapshot immediately returned to UI
         var initialQ = db.Alerts.AsNoTracking();
 
         if (!string.IsNullOrWhiteSpace(farmId))
@@ -120,9 +165,8 @@ public class WebClientController(
 
         var initial = await initialQ
             .OrderByDescending(a => a.Timestamp)
-            .Take(take)
-            .ToListAsync();
+            .FirstOrDefaultAsync();
 
-        return new RealtimeListenResponse<List<Alert>>(group, initial);
+        return new RealtimeListenResponse<Alert?>(group, initial);
     }
 }

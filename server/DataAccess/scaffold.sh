@@ -1,6 +1,6 @@
 #!/bin/bash
 set -a
-source .env.development
+source ../Api/.env.development
 set +a
 
 dotnet tool install -g dotnet-ef

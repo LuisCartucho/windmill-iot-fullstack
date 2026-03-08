@@ -9,8 +9,6 @@ using DataAccess.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 
-
-
 public class AuthService(WindFarmDbContext db, IConfiguration config)
 {
     private const int SaltSize = 16;

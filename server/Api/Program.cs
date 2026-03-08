@@ -77,15 +77,18 @@ app.UseSwaggerUi();
 app.MapControllers();
 
 // Connect MQTT (TCP) - best effort so API can still start
-var mqtt = app.Services.GetRequiredService<IMqttClientService>();
+var mqttHost = builder.Configuration["Mqtt__Host"] ?? "broker.hivemq.com";
+var mqttPort = int.TryParse(builder.Configuration["Mqtt__Port"], out var p) ? p : 1883;
+
 try
 {
-    await mqtt.ConnectAsync("broker.hivemq.com", 1883);
-    Console.WriteLine("MQTT connected.");
+    var mqtt = app.Services.GetRequiredService<IMqttClientService>();
+    await mqtt.ConnectAsync(mqttHost, mqttPort);
+    app.Logger.LogInformation("MQTT connected to {Host}:{Port}", mqttHost, mqttPort);
 }
 catch (Exception ex)
 {
-    Console.WriteLine($"MQTT connect failed (API will still run): {ex.Message}");
+    app.Logger.LogError(ex, "MQTT connect failed; disabling MQTT subscriptions.");
 }
 
 app.Run();
