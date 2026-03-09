@@ -15,10 +15,7 @@ public class WebClientController(
     WindFarmDbContext db
 ) : RealtimeControllerBase(backplane)
 {
-    // ----------------------------
-    // 1) INITIAL HISTORY (list)
-    // ----------------------------
-    // GET /api/webclient/telemetry?farmId=...&turbineId=...&take=200
+    // GET /api/webclient/GetTelemetry?farmId=...&turbineId=...&take=200
     [HttpGet(nameof(GetTelemetry))]
     public async Task<RealtimeListenResponse<List<Telemetry>>> GetTelemetry(
         string connectionId,
@@ -27,19 +24,43 @@ public class WebClientController(
         int take = 200)
     {
         take = Math.Clamp(take, 1, 500);
-        
+
         var group = $"telemetry:init:{farmId ?? "all"}:{turbineId ?? "all"}";
         await backplane.Groups.AddToGroupAsync(connectionId, group);
 
-        var q = db.Telemetries.AsNoTracking();
+        realtimeManager.Subscribe<WindFarmDbContext>(
+            connectionId,
+            group,
+            criteria: snap => snap.HasChanges<Telemetry>(),
+            query: async ctx =>
+            {
+                var q = ctx.Telemetries.AsNoTracking();
+
+                if (!string.IsNullOrWhiteSpace(farmId))
+                    q = q.Where(t => t.FarmId == farmId);
+
+                if (!string.IsNullOrWhiteSpace(turbineId))
+                    q = q.Where(t => t.TurbineId == turbineId);
+
+                var latest = await q
+                    .OrderByDescending(t => t.Timestamp)
+                    .Take(take)
+                    .ToListAsync();
+
+                return latest
+                    .OrderBy(t => t.Timestamp)
+                    .ToList();
+            });
+
+        var initialQuery = db.Telemetries.AsNoTracking();
 
         if (!string.IsNullOrWhiteSpace(farmId))
-            q = q.Where(t => t.FarmId == farmId);
+            initialQuery = initialQuery.Where(t => t.FarmId == farmId);
 
         if (!string.IsNullOrWhiteSpace(turbineId))
-            q = q.Where(t => t.TurbineId == turbineId);
+            initialQuery = initialQuery.Where(t => t.TurbineId == turbineId);
 
-        var initialLatest = await q
+        var initialLatest = await initialQuery
             .OrderByDescending(t => t.Timestamp)
             .Take(take)
             .ToListAsync();
@@ -51,7 +72,6 @@ public class WebClientController(
         return new RealtimeListenResponse<List<Telemetry>>(group, initial);
     }
 
-    // GET /api/webclient/alerts?farmId=...&turbineId=...&take=200
     [HttpGet(nameof(GetAlerts))]
     public async Task<RealtimeListenResponse<List<Alert>>> GetAlerts(
         string connectionId,
@@ -79,9 +99,6 @@ public class WebClientController(
 
         return new RealtimeListenResponse<List<Alert>>(group, initial);
     }
-    // ----------------------------
-    // REALTIME UPDATES
-    // ----------------------------
 
     [HttpGet(nameof(GetTelemetryLatest))]
     public async Task<RealtimeListenResponse<Telemetry?>> GetTelemetryLatest(
@@ -111,7 +128,6 @@ public class WebClientController(
                     .FirstOrDefaultAsync();
             });
 
-        // initial "latest one"
         var initialQ = db.Telemetries.AsNoTracking();
 
         if (!string.IsNullOrWhiteSpace(farmId))

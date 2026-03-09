@@ -28,7 +28,7 @@ export default function Shell() {
     const [selected, setSelected] = useState<string | null>(null);
 
     // ONE realtime subscription (all farms)
-    const { latestByTurbine } = useFarmTelemetry(undefined, 500);
+    const { latestByTurbine } = useFarmTelemetry(undefined, undefined, 500);
 
     // derive farmId from selected turbine's latest telemetry
     const farmId = useMemo(() => {
