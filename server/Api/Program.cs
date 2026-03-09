@@ -58,6 +58,7 @@ builder.Services.AddCors(options =>
 });
 
 builder.Services.AddScoped<AuthService>();
+builder.Services.AddHostedService<TelemetryCleanupService>();
 
 var app = builder.Build();
 
