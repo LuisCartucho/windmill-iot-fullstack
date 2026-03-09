@@ -27,7 +27,7 @@ public class TelemetryCleanupService : BackgroundService
 
                 var deleted = await db.Database.ExecuteSqlRawAsync("""
                                                                        DELETE FROM iot_windfarm."Telemetry"
-                                                                       WHERE "Timestamp" < NOW() - INTERVAL '5 minutes'
+                                                                       WHERE "Timestamp" < NOW() - INTERVAL '1 day'
                                                                    """);
 
                 if (deleted > 0)
