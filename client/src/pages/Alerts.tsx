@@ -1,5 +1,6 @@
 import { useContext } from "react";
 import { SelectedTurbine } from "../layout/Shell";
+import AlertsList from "../components/alerts/AlertsList";
 
 export default function Alerts() {
     const {
@@ -11,7 +12,7 @@ export default function Alerts() {
 
     if (!selected) {
         return (
-            <div className="p-4 text-sm text-base-content/60">
+            <div className="p-4 text-sm text-white/50">
                 Select a turbine to view alerts
             </div>
         );
@@ -20,33 +21,18 @@ export default function Alerts() {
     return (
         <div className="p-4">
             <div className="flex items-center justify-between">
-                <h2 className="text-xl font-bold">Alerts</h2>
-                {alertsLoading && (
-                    <div className="text-xs text-base-content/50">Loading...</div>
-                )}
+                <h2 className="text-xl font-bold text-white">Alerts</h2>
+                {alertsLoading ? (
+                    <div className="text-xs text-white/40">Loading...</div>
+                ) : null}
             </div>
 
             {alertsError ? (
-                <p className="mt-2 text-sm text-error">{alertsError}</p>
+                <p className="mt-3 text-sm text-error">{alertsError}</p>
             ) : alerts.length === 0 ? (
-                <p className="mt-2 text-base-content/60">No alerts</p>
+                <p className="mt-3 text-white/50">No alerts</p>
             ) : (
-                <div className="mt-4 space-y-2">
-                    {alerts.map((a) => (
-                        <div
-                            key={`${a.turbineId ?? ""}-${a.timestamp ?? ""}-${a.message ?? ""}`}
-                            className="rounded-xl border border-base-300/30 bg-base-100/30 p-3"
-                        >
-                            <div className="flex items-center justify-between">
-                                <div className="font-semibold">{a.severity}</div>
-                                <div className="text-xs opacity-60">
-                                    {a.timestamp ? new Date(a.timestamp).toLocaleString() : ""}
-                                </div>
-                            </div>
-                            <div className="mt-1 text-sm opacity-90">{a.message}</div>
-                        </div>
-                    ))}
-                </div>
+                <AlertsList alerts={alerts} />
             )}
         </div>
     );
