@@ -1,20 +1,41 @@
-import { createContext, useMemo, useState } from "react";
+import {
+    createContext,
+    useState,
+    type Dispatch,
+    type SetStateAction,
+} from "react";
 import { Outlet } from "react-router";
 import Sidebar from "./Sidebar";
 import Topbar from "./Topbar";
 import Tabs from "./Tabs";
-import { useFarmTelemetry } from "../hooks/useTelemetry";
+import { useTelemetry } from "../hooks/useTelemetry";
+import { useAlerts } from "../hooks/useAlerts";
+import type { Alert, Telemetry } from "../generated-ts-client";
 
 type SelectedTurbineContextValue = {
     selected: string | null;
-    setSelected: (id: string | null) => void;
+    setSelected: Dispatch<SetStateAction<string | null>>;
     farmId: string | null;
+
+    telemetryRows: Telemetry[];
+    telemetryLoading: boolean;
+    telemetryError: string | null;
+
+    alerts: Alert[];
+    alertsLoading: boolean;
+    alertsError: string | null;
 };
 
 export const SelectedTurbine = createContext<SelectedTurbineContextValue>({
     selected: null,
     setSelected: () => {},
     farmId: null,
+    telemetryRows: [],
+    telemetryLoading: false,
+    telemetryError: null,
+    alerts: [],
+    alertsLoading: false,
+    alertsError: null,
 });
 
 const TURBINES = [
@@ -25,25 +46,18 @@ const TURBINES = [
 ];
 
 export default function Shell() {
-    const [selected, setSelected] = useState<string | null>(null);
-
-    // ONE realtime subscription (all farms)
-    const { latestByTurbine } = useFarmTelemetry(undefined, undefined, 500);
-
-    // derive farmId from selected turbine's latest telemetry
-    const farmId = useMemo(() => {
-        if (!selected) return null;
-        const latest = latestByTurbine?.[selected] as any;
-        return latest?.farmId ?? null;
-    }, [latestByTurbine, selected]);
+    const [selected, setSelected] = useState<string | null>("turbine-alpha");
 
     return (
         <div className="min-h-screen grid grid-cols-[320px_1fr]" data-theme="dark">
             <Sidebar
                 turbines={TURBINES}
-                selected={selected}
-                onSelect={setSelected}
-                latestByTurbine={latestByTurbine}
+                selected={selected ?? undefined}
+                onSelect={(id) => {
+                    console.log("[Shell] selected", id);
+                    setSelected(id);
+                }}
+                latestByTurbine={{}}
             />
 
             <div className="flex flex-col min-h-screen">
@@ -51,16 +65,55 @@ export default function Shell() {
                     <Topbar />
                 </div>
 
-                <div className="h-[56px] shrink-0">
+                <div className="h-14 shrink-0">
                     <Tabs />
                 </div>
 
                 <div className="flex-1 min-h-0 p-5 overflow-auto">
-                    <SelectedTurbine.Provider value={{ selected, setSelected, farmId }}>
-                        <Outlet />
-                    </SelectedTurbine.Provider>
+                    <SelectedTurbineData
+                        selected={selected}
+                        setSelected={setSelected}
+                    />
                 </div>
             </div>
         </div>
+    );
+}
+
+function SelectedTurbineData({
+                                 selected,
+                                 setSelected,
+                             }: {
+    selected: string | null;
+    setSelected: Dispatch<SetStateAction<string | null>>;
+}) {
+    const {
+        rows: telemetryRows,
+        isLoading: telemetryLoading,
+        error: telemetryError,
+    } = useTelemetry(undefined, selected ?? undefined, 50);
+
+    const {
+        alerts,
+        isLoading: alertsLoading,
+        error: alertsError,
+    } = useAlerts(undefined, selected ?? undefined, 50);
+
+    return (
+        <SelectedTurbine.Provider
+            value={{
+                selected,
+                setSelected,
+                farmId: null,
+                telemetryRows,
+                telemetryLoading,
+                telemetryError,
+                alerts,
+                alertsLoading,
+                alertsError,
+            }}
+        >
+            <Outlet />
+        </SelectedTurbine.Provider>
     );
 }

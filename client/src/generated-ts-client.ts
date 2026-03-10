@@ -108,12 +108,8 @@ export class WebClientClient {
         this.baseUrl = baseUrl ?? "";
     }
 
-    getTelemetry(connectionId: string | undefined, farmId: string | null | undefined, turbineId: string | null | undefined, take: number | undefined): Promise<RealtimeListenResponseOfListOfTelemetry> {
+    getTelemetry(farmId: string | null | undefined, turbineId: string | null | undefined, take: number | undefined): Promise<Telemetry[]> {
         let url_ = this.baseUrl + "/api/WebClient/GetTelemetry?";
-        if (connectionId === null)
-            throw new globalThis.Error("The parameter 'connectionId' cannot be null.");
-        else if (connectionId !== undefined)
-            url_ += "connectionId=" + encodeURIComponent("" + connectionId) + "&";
         if (farmId !== undefined && farmId !== null)
             url_ += "farmId=" + encodeURIComponent("" + farmId) + "&";
         if (turbineId !== undefined && turbineId !== null)
@@ -136,13 +132,13 @@ export class WebClientClient {
         });
     }
 
-    protected processGetTelemetry(response: Response): Promise<RealtimeListenResponseOfListOfTelemetry> {
+    protected processGetTelemetry(response: Response): Promise<Telemetry[]> {
         const status = response.status;
         let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
         if (status === 200) {
             return response.text().then((_responseText) => {
             let result200: any = null;
-            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as RealtimeListenResponseOfListOfTelemetry;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as Telemetry[];
             return result200;
             });
         } else if (status !== 200 && status !== 204) {
@@ -150,15 +146,52 @@ export class WebClientClient {
             return throwException("An unexpected server error occurred.", status, _responseText, _headers);
             });
         }
-        return Promise.resolve<RealtimeListenResponseOfListOfTelemetry>(null as any);
+        return Promise.resolve<Telemetry[]>(null as any);
     }
 
-    getAlerts(connectionId: string | undefined, farmId: string | null | undefined, turbineId: string | null | undefined, take: number | undefined): Promise<RealtimeListenResponseOfListOfAlert> {
-        let url_ = this.baseUrl + "/api/WebClient/GetAlerts?";
+    getTelemetryLatest(connectionId: string | undefined, farmId: string | null | undefined, turbineId: string | null | undefined): Promise<RealtimeListenResponseOfTelemetry> {
+        let url_ = this.baseUrl + "/api/WebClient/GetTelemetryLatest?";
         if (connectionId === null)
             throw new globalThis.Error("The parameter 'connectionId' cannot be null.");
         else if (connectionId !== undefined)
             url_ += "connectionId=" + encodeURIComponent("" + connectionId) + "&";
+        if (farmId !== undefined && farmId !== null)
+            url_ += "farmId=" + encodeURIComponent("" + farmId) + "&";
+        if (turbineId !== undefined && turbineId !== null)
+            url_ += "turbineId=" + encodeURIComponent("" + turbineId) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: RequestInit = {
+            method: "GET",
+            headers: {
+                "Accept": "application/json"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processGetTelemetryLatest(_response);
+        });
+    }
+
+    protected processGetTelemetryLatest(response: Response): Promise<RealtimeListenResponseOfTelemetry> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as RealtimeListenResponseOfTelemetry;
+            return result200;
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<RealtimeListenResponseOfTelemetry>(null as any);
+    }
+
+    getAlerts(farmId: string | null | undefined, turbineId: string | null | undefined, take: number | undefined): Promise<Alert[]> {
+        let url_ = this.baseUrl + "/api/WebClient/GetAlerts?";
         if (farmId !== undefined && farmId !== null)
             url_ += "farmId=" + encodeURIComponent("" + farmId) + "&";
         if (turbineId !== undefined && turbineId !== null)
@@ -181,13 +214,13 @@ export class WebClientClient {
         });
     }
 
-    protected processGetAlerts(response: Response): Promise<RealtimeListenResponseOfListOfAlert> {
+    protected processGetAlerts(response: Response): Promise<Alert[]> {
         const status = response.status;
         let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
         if (status === 200) {
             return response.text().then((_responseText) => {
             let result200: any = null;
-            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as RealtimeListenResponseOfListOfAlert;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as Alert[];
             return result200;
             });
         } else if (status !== 200 && status !== 204) {
@@ -195,7 +228,48 @@ export class WebClientClient {
             return throwException("An unexpected server error occurred.", status, _responseText, _headers);
             });
         }
-        return Promise.resolve<RealtimeListenResponseOfListOfAlert>(null as any);
+        return Promise.resolve<Alert[]>(null as any);
+    }
+
+    getAlertLatest(connectionId: string | undefined, farmId: string | null | undefined, turbineId: string | null | undefined): Promise<RealtimeListenResponseOfAlert> {
+        let url_ = this.baseUrl + "/api/WebClient/GetAlertLatest?";
+        if (connectionId === null)
+            throw new globalThis.Error("The parameter 'connectionId' cannot be null.");
+        else if (connectionId !== undefined)
+            url_ += "connectionId=" + encodeURIComponent("" + connectionId) + "&";
+        if (farmId !== undefined && farmId !== null)
+            url_ += "farmId=" + encodeURIComponent("" + farmId) + "&";
+        if (turbineId !== undefined && turbineId !== null)
+            url_ += "turbineId=" + encodeURIComponent("" + turbineId) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: RequestInit = {
+            method: "GET",
+            headers: {
+                "Accept": "application/json"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processGetAlertLatest(_response);
+        });
+    }
+
+    protected processGetAlertLatest(response: Response): Promise<RealtimeListenResponseOfAlert> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as RealtimeListenResponseOfAlert;
+            return result200;
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<RealtimeListenResponseOfAlert>(null as any);
     }
 
     connect(): Promise<void> {
@@ -234,16 +308,6 @@ export interface LoginRequest {
     password?: string;
 }
 
-/** Returned by subscribe endpoints so the client knows which SSE group to listen on. */
-export interface RealtimeListenResponse {
-    group?: string;
-}
-
-/** Returned by subscribe endpoints with initial data. The client receives the current state immediately and knows which SSE group to listen on for subsequent updates. */
-export interface RealtimeListenResponseOfListOfTelemetry extends RealtimeListenResponse {
-    data?: Telemetry[] | undefined;
-}
-
 export interface Telemetry {
     id?: string;
     farmId?: string;
@@ -262,9 +326,14 @@ export interface Telemetry {
     status?: string;
 }
 
+/** Returned by subscribe endpoints so the client knows which SSE group to listen on. */
+export interface RealtimeListenResponse {
+    group?: string;
+}
+
 /** Returned by subscribe endpoints with initial data. The client receives the current state immediately and knows which SSE group to listen on for subsequent updates. */
-export interface RealtimeListenResponseOfListOfAlert extends RealtimeListenResponse {
-    data?: Alert[] | undefined;
+export interface RealtimeListenResponseOfTelemetry extends RealtimeListenResponse {
+    data?: Telemetry;
 }
 
 export interface Alert {
@@ -274,6 +343,11 @@ export interface Alert {
     timestamp?: string;
     severity?: string;
     message?: string;
+}
+
+/** Returned by subscribe endpoints with initial data. The client receives the current state immediately and knows which SSE group to listen on for subsequent updates. */
+export interface RealtimeListenResponseOfAlert extends RealtimeListenResponse {
+    data?: Alert;
 }
 
 export interface FileResponse {

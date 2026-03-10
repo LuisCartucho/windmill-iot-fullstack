@@ -15,91 +15,36 @@ public class WebClientController(
     WindFarmDbContext db
 ) : RealtimeControllerBase(backplane)
 {
-    // GET /api/webclient/GetTelemetry?farmId=...&turbineId=...&take=200
+    // Initial chart/list snapshot only (small payload)
+    // GET /api/WebClient/GetTelemetry?farmId=...&turbineId=...&take=50
     [HttpGet(nameof(GetTelemetry))]
-    public async Task<RealtimeListenResponse<List<Telemetry>>> GetTelemetry(
-        string connectionId,
+    public async Task<List<Telemetry>> GetTelemetry(
         string? farmId,
         string? turbineId,
-        int take = 200)
+        int take = 50)
     {
-        take = Math.Clamp(take, 1, 500);
+        take = Math.Clamp(take, 1, 200);
 
-        var group = $"telemetry:init:{farmId ?? "all"}:{turbineId ?? "all"}";
-        await backplane.Groups.AddToGroupAsync(connectionId, group);
-
-        realtimeManager.Subscribe<WindFarmDbContext>(
-            connectionId,
-            group,
-            criteria: snap => snap.HasChanges<Telemetry>(),
-            query: async ctx =>
-            {
-                var q = ctx.Telemetries.AsNoTracking();
-
-                if (!string.IsNullOrWhiteSpace(farmId))
-                    q = q.Where(t => t.FarmId == farmId);
-
-                if (!string.IsNullOrWhiteSpace(turbineId))
-                    q = q.Where(t => t.TurbineId == turbineId);
-
-                var latest = await q
-                    .OrderByDescending(t => t.Timestamp)
-                    .Take(take)
-                    .ToListAsync();
-
-                return latest
-                    .OrderBy(t => t.Timestamp)
-                    .ToList();
-            });
-
-        var initialQuery = db.Telemetries.AsNoTracking();
+        var q = db.Telemetries.AsNoTracking();
 
         if (!string.IsNullOrWhiteSpace(farmId))
-            initialQuery = initialQuery.Where(t => t.FarmId == farmId);
+            q = q.Where(t => t.FarmId == farmId);
 
         if (!string.IsNullOrWhiteSpace(turbineId))
-            initialQuery = initialQuery.Where(t => t.TurbineId == turbineId);
+            q = q.Where(t => t.TurbineId == turbineId);
 
-        var initialLatest = await initialQuery
+        var latest = await q
             .OrderByDescending(t => t.Timestamp)
             .Take(take)
             .ToListAsync();
 
-        var initial = initialLatest
+        return latest
             .OrderBy(t => t.Timestamp)
             .ToList();
-
-        return new RealtimeListenResponse<List<Telemetry>>(group, initial);
     }
 
-    [HttpGet(nameof(GetAlerts))]
-    public async Task<RealtimeListenResponse<List<Alert>>> GetAlerts(
-        string connectionId,
-        string? farmId,
-        string? turbineId,
-        int take = 200)
-    {
-        take = Math.Clamp(take, 1, 500);
-
-        var group = $"alerts:init:{farmId ?? "all"}:{turbineId ?? "all"}";
-        await backplane.Groups.AddToGroupAsync(connectionId, group);
-
-        var q = db.Alerts.AsNoTracking();
-
-        if (!string.IsNullOrWhiteSpace(farmId))
-            q = q.Where(a => a.FarmId == farmId);
-
-        if (!string.IsNullOrWhiteSpace(turbineId))
-            q = q.Where(a => a.TurbineId == turbineId);
-
-        var initial = await q
-            .OrderByDescending(a => a.Timestamp)
-            .Take(take)
-            .ToListAsync();
-
-        return new RealtimeListenResponse<List<Alert>>(group, initial);
-    }
-
+    // Live latest telemetry only for transfer
+    // GET /api/WebClient/GetTelemetryLatest?connectionId=...&farmId=...&turbineId=...
     [HttpGet(nameof(GetTelemetryLatest))]
     public async Task<RealtimeListenResponse<Telemetry?>> GetTelemetryLatest(
         string connectionId,
@@ -143,6 +88,32 @@ public class WebClientController(
         return new RealtimeListenResponse<Telemetry?>(group, initial);
     }
 
+    // Initial alerts snapshot only 
+    // GET /api/WebClient/GetAlerts?farmId=...&turbineId=...&take=50
+    [HttpGet(nameof(GetAlerts))]
+    public async Task<List<Alert>> GetAlerts(
+        string? farmId,
+        string? turbineId,
+        int take = 50)
+    {
+        take = Math.Clamp(take, 1, 200);
+
+        var q = db.Alerts.AsNoTracking();
+
+        if (!string.IsNullOrWhiteSpace(farmId))
+            q = q.Where(a => a.FarmId == farmId);
+
+        if (!string.IsNullOrWhiteSpace(turbineId))
+            q = q.Where(a => a.TurbineId == turbineId);
+
+        return await q
+            .OrderByDescending(a => a.Timestamp)
+            .Take(take)
+            .ToListAsync();
+    }
+
+    // Live latest alert only, for transfer
+    // GET /api/WebClient/GetAlertLatest?connectionId=...&farmId=...&turbineId=...
     [HttpGet(nameof(GetAlertLatest))]
     public async Task<RealtimeListenResponse<Alert?>> GetAlertLatest(
         string connectionId,

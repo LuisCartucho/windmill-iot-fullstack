@@ -6,11 +6,12 @@ import Alerts from "../pages/Alerts";
 import ActionHistory from "../pages/ActionHistory";
 import Login from "../pages/Login";
 import Dashboard from "../pages/Dashboard.jsx";
+import {ReactNode} from "react";
 
-function RequireAuth({ children }) {
+function RequireAuth({ children }: { children: ReactNode }) {
     const token = localStorage.getItem("token");
     if (!token) return <Navigate to="/login" replace />;
-    return children;
+    return <>{children}</>;
 }
 
 const router = createBrowserRouter([

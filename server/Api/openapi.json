@@ -68,21 +68,13 @@
         "operationId": "WebClient_GetTelemetry",
         "parameters": [
           {
-            "name": "connectionId",
-            "in": "query",
-            "schema": {
-              "type": "string"
-            },
-            "x-position": 1
-          },
-          {
             "name": "farmId",
             "in": "query",
             "schema": {
               "type": "string",
               "nullable": true
             },
-            "x-position": 2
+            "x-position": 1
           },
           {
             "name": "turbineId",
@@ -91,7 +83,7 @@
               "type": "string",
               "nullable": true
             },
-            "x-position": 3
+            "x-position": 2
           },
           {
             "name": "take",
@@ -99,9 +91,9 @@
             "schema": {
               "type": "integer",
               "format": "int32",
-              "default": 200
+              "default": 50
             },
-            "x-position": 4
+            "x-position": 3
           }
         ],
         "responses": {
@@ -110,7 +102,10 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/RealtimeListenResponseOfListOfTelemetry"
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Telemetry"
+                  }
                 }
               }
             }
@@ -118,12 +113,12 @@
         }
       }
     },
-    "/api/WebClient/GetAlerts": {
+    "/api/WebClient/GetTelemetryLatest": {
       "get": {
         "tags": [
           "WebClient"
         ],
-        "operationId": "WebClient_GetAlerts",
+        "operationId": "WebClient_GetTelemetryLatest",
         "parameters": [
           {
             "name": "connectionId",
@@ -150,16 +145,6 @@
               "nullable": true
             },
             "x-position": 3
-          },
-          {
-            "name": "take",
-            "in": "query",
-            "schema": {
-              "type": "integer",
-              "format": "int32",
-              "default": 200
-            },
-            "x-position": 4
           }
         ],
         "responses": {
@@ -168,7 +153,108 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/RealtimeListenResponseOfListOfAlert"
+                  "$ref": "#/components/schemas/RealtimeListenResponseOfTelemetry"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/WebClient/GetAlerts": {
+      "get": {
+        "tags": [
+          "WebClient"
+        ],
+        "operationId": "WebClient_GetAlerts",
+        "parameters": [
+          {
+            "name": "farmId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "nullable": true
+            },
+            "x-position": 1
+          },
+          {
+            "name": "turbineId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "nullable": true
+            },
+            "x-position": 2
+          },
+          {
+            "name": "take",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 50
+            },
+            "x-position": 3
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Alert"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/WebClient/GetAlertLatest": {
+      "get": {
+        "tags": [
+          "WebClient"
+        ],
+        "operationId": "WebClient_GetAlertLatest",
+        "parameters": [
+          {
+            "name": "connectionId",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "x-position": 1
+          },
+          {
+            "name": "farmId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "nullable": true
+            },
+            "x-position": 2
+          },
+          {
+            "name": "turbineId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "nullable": true
+            },
+            "x-position": 3
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RealtimeListenResponseOfAlert"
                 }
               }
             }
@@ -203,27 +289,6 @@
             "type": "string"
           }
         }
-      },
-      "RealtimeListenResponseOfListOfTelemetry": {
-        "allOf": [
-          {
-            "$ref": "#/components/schemas/RealtimeListenResponse"
-          },
-          {
-            "type": "object",
-            "description": "Returned by subscribe endpoints with initial data. The client receives the current state\nimmediately and knows which SSE group to listen on for subsequent updates.",
-            "additionalProperties": false,
-            "properties": {
-              "data": {
-                "type": "array",
-                "nullable": true,
-                "items": {
-                  "$ref": "#/components/schemas/Telemetry"
-                }
-              }
-            }
-          }
-        ]
       },
       "Telemetry": {
         "type": "object",
@@ -288,17 +353,7 @@
           }
         }
       },
-      "RealtimeListenResponse": {
-        "type": "object",
-        "description": "Returned by subscribe endpoints so the client knows which SSE group to listen on.",
-        "additionalProperties": false,
-        "properties": {
-          "group": {
-            "type": "string"
-          }
-        }
-      },
-      "RealtimeListenResponseOfListOfAlert": {
+      "RealtimeListenResponseOfTelemetry": {
         "allOf": [
           {
             "$ref": "#/components/schemas/RealtimeListenResponse"
@@ -309,15 +364,21 @@
             "additionalProperties": false,
             "properties": {
               "data": {
-                "type": "array",
-                "nullable": true,
-                "items": {
-                  "$ref": "#/components/schemas/Alert"
-                }
+                "$ref": "#/components/schemas/Telemetry"
               }
             }
           }
         ]
+      },
+      "RealtimeListenResponse": {
+        "type": "object",
+        "description": "Returned by subscribe endpoints so the client knows which SSE group to listen on.",
+        "additionalProperties": false,
+        "properties": {
+          "group": {
+            "type": "string"
+          }
+        }
       },
       "Alert": {
         "type": "object",
@@ -344,6 +405,23 @@
             "type": "string"
           }
         }
+      },
+      "RealtimeListenResponseOfAlert": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/RealtimeListenResponse"
+          },
+          {
+            "type": "object",
+            "description": "Returned by subscribe endpoints with initial data. The client receives the current state\nimmediately and knows which SSE group to listen on for subsequent updates.",
+            "additionalProperties": false,
+            "properties": {
+              "data": {
+                "$ref": "#/components/schemas/Alert"
+              }
+            }
+          }
+        ]
       }
     }
   }

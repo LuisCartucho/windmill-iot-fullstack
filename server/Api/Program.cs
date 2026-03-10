@@ -92,4 +92,9 @@ catch (Exception ex)
     app.Logger.LogError(ex, "MQTT connect failed; disabling MQTT subscriptions.");
 }
 
+app.GenerateApiClientsFromOpenApi(
+    "./../../client/src/generated-ts-client.ts",
+    "./openapi.json"
+).GetAwaiter().GetResult();
+
 app.Run();

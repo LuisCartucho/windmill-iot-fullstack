@@ -1,6 +1,6 @@
-import { useContext, useMemo } from "react";
+import React, { useContext, useMemo } from "react";
 import { SelectedTurbine } from "../layout/Shell";
-import { useTurbineTelemetry } from "../hooks/useTelemetry";
+import type { Telemetry } from "../generated-ts-client";
 import {
     LineChart,
     Line,
@@ -11,27 +11,33 @@ import {
     ResponsiveContainer,
 } from "recharts";
 
+type ChartRow = Telemetry & { ts: number };
+
+const WINDOW_MS = 5 * 60 * 1000;
+
 export default function Monitor() {
-    const { selected, farmId } = useContext(SelectedTurbine);
-    const telemetry = useTurbineTelemetry(farmId ?? undefined, selected ?? undefined, 500);
+    const {
+        selected,
+        telemetryRows,
+        telemetryLoading,
+        telemetryError,
+    } = useContext(SelectedTurbine);
 
-    // Convert timestamp → numeric time, sort, dedupe, and keep a rolling window
-    const data = useMemo(() => {
-        const mapped = telemetry
-            .map((t: any) => ({ ...t, ts: Date.parse(t.timestamp) }))
-            .filter((t: any) => Number.isFinite(t.ts))
-            .sort((a: any, b: any) => a.ts - b.ts);
+    const data: ChartRow[] = useMemo(() => {
+        if (!telemetryRows?.length) return [];
 
-        // Dedupe by timestamp (keep the last sample for each ts)
-        const byTs = new Map<number, any>();
-        for (const row of mapped) byTs.set(row.ts, row);
-        const deduped = Array.from(byTs.values()).sort((a, b) => a.ts - b.ts);
+        const mapped: ChartRow[] = telemetryRows
+            .map((t) => {
+                const ts = t.timestamp ? Date.parse(t.timestamp) : NaN;
+                return { ...t, ts };
+            })
+            .filter((t) => Number.isFinite(t.ts))
+            .sort((a, b) => a.ts - b.ts);
 
-        // Rolling window: last 5 minutes (change if you want)
-        const WINDOW_MS = 5 * 60 * 1000;
-        const cutoff = Date.now() - WINDOW_MS;
-        return deduped.filter((d) => d.ts >= cutoff);
-    }, [telemetry]);
+/*        const cutoff = Date.now() - WINDOW_MS;
+        return mapped.filter((d) => d.ts >= cutoff);*/
+        return mapped;
+    }, [telemetryRows]);
 
     if (!selected) {
         return (
@@ -45,25 +51,19 @@ export default function Monitor() {
 
     return (
         <div className="grid grid-cols-2 gap-4">
-            <Chart title="Wind Speed (m/s)">
+            <Chart title="Wind Speed (m/s)" isLoading={telemetryLoading} error={telemetryError}>
                 <ResponsiveContainer width="100%" height={240}>
                     <LineChart data={data}>
                         <CartesianGrid strokeDasharray="3 3" opacity={0.15} />
-
                         <XAxis
                             dataKey="ts"
                             type="number"
                             domain={["dataMin", "dataMax"]}
                             tick={{ fontSize: 10 }}
-                            tickFormatter={(v) => new Date(v).toLocaleTimeString()}
+                            tickFormatter={(v) => new Date(Number(v)).toLocaleTimeString()}
                         />
-
                         <YAxis domain={["auto", "auto"]} />
-
-                        <Tooltip
-                            labelFormatter={(v) => new Date(Number(v)).toLocaleTimeString()}
-                        />
-
+                        <Tooltip labelFormatter={(v) => new Date(Number(v)).toLocaleTimeString()} />
                         <Line
                             type="linear"
                             dataKey="windSpeed"
@@ -75,25 +75,19 @@ export default function Monitor() {
                 </ResponsiveContainer>
             </Chart>
 
-            <Chart title="Power Output (kW)">
+            <Chart title="Power Output (kW)" isLoading={telemetryLoading} error={telemetryError}>
                 <ResponsiveContainer width="100%" height={240}>
                     <LineChart data={data}>
                         <CartesianGrid strokeDasharray="3 3" opacity={0.15} />
-
                         <XAxis
                             dataKey="ts"
                             type="number"
                             domain={["dataMin", "dataMax"]}
                             tick={{ fontSize: 10 }}
-                            tickFormatter={(v) => new Date(v).toLocaleTimeString()}
+                            tickFormatter={(v) => new Date(Number(v)).toLocaleTimeString()}
                         />
-
                         <YAxis domain={["auto", "auto"]} />
-
-                        <Tooltip
-                            labelFormatter={(v) => new Date(Number(v)).toLocaleTimeString()}
-                        />
-
+                        <Tooltip labelFormatter={(v) => new Date(Number(v)).toLocaleTimeString()} />
                         <Line
                             type="linear"
                             dataKey="powerOutput"
@@ -108,10 +102,24 @@ export default function Monitor() {
     );
 }
 
-function Chart({ title, children }: { title: string; children: React.ReactNode }) {
+function Chart({
+                   title,
+                   children,
+                   isLoading,
+                   error,
+               }: {
+    title: string;
+    children: React.ReactNode;
+    isLoading?: boolean;
+    error?: string | null;
+}) {
     return (
         <div className="rounded-2xl border border-base-300/30 bg-base-100/20 p-4">
-            <div className="mb-2 font-semibold opacity-80">{title}</div>
+            <div className="mb-2 flex items-center justify-between">
+                <div className="font-semibold opacity-80">{title}</div>
+                {isLoading && <div className="text-xs text-base-content/50">Loading...</div>}
+            </div>
+            {error ? <div className="mb-2 text-sm text-error">{error}</div> : null}
             {children}
         </div>
     );

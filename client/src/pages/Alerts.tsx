@@ -1,10 +1,13 @@
 import { useContext } from "react";
 import { SelectedTurbine } from "../layout/Shell";
-import { useRealtimeAlerts } from "../hooks/useAlerts";
 
 export default function Alerts() {
-    const { selected } = useContext(SelectedTurbine);
-    const alerts = useRealtimeAlerts(undefined, selected ?? undefined, 200);
+    const {
+        selected,
+        alerts,
+        alertsLoading,
+        alertsError,
+    } = useContext(SelectedTurbine);
 
     if (!selected) {
         return (
@@ -16,14 +19,24 @@ export default function Alerts() {
 
     return (
         <div className="p-4">
-            <h2 className="text-xl font-bold">Alerts</h2>
+            <div className="flex items-center justify-between">
+                <h2 className="text-xl font-bold">Alerts</h2>
+                {alertsLoading && (
+                    <div className="text-xs text-base-content/50">Loading...</div>
+                )}
+            </div>
 
-            {alerts.length === 0 ? (
-                <p className="text-base-content/60 mt-2">No alerts</p>
+            {alertsError ? (
+                <p className="mt-2 text-sm text-error">{alertsError}</p>
+            ) : alerts.length === 0 ? (
+                <p className="mt-2 text-base-content/60">No alerts</p>
             ) : (
                 <div className="mt-4 space-y-2">
                     {alerts.map((a) => (
-                        <div key={a.id} className="rounded-xl border border-base-300/30 bg-base-100/30 p-3">
+                        <div
+                            key={`${a.turbineId ?? ""}-${a.timestamp ?? ""}-${a.message ?? ""}`}
+                            className="rounded-xl border border-base-300/30 bg-base-100/30 p-3"
+                        >
                             <div className="flex items-center justify-between">
                                 <div className="font-semibold">{a.severity}</div>
                                 <div className="text-xs opacity-60">
