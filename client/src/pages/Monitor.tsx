@@ -1,19 +1,10 @@
-import React, { useContext, useMemo } from "react";
+import { useContext, useMemo } from "react";
 import { SelectedTurbine } from "../layout/Shell";
 import type { Telemetry } from "../generated-ts-client";
-import {
-    LineChart,
-    Line,
-    XAxis,
-    YAxis,
-    CartesianGrid,
-    Tooltip,
-    ResponsiveContainer,
-} from "recharts";
+import MetricChart from "../components/MetricChart";
+import StatusCard from "../components/StatusCard";
 
 type ChartRow = Telemetry & { ts: number };
-
-const WINDOW_MS = 5 * 60 * 1000;
 
 export default function Monitor() {
     const {
@@ -26,23 +17,24 @@ export default function Monitor() {
     const data: ChartRow[] = useMemo(() => {
         if (!telemetryRows?.length) return [];
 
-        const mapped: ChartRow[] = telemetryRows
+        return telemetryRows
             .map((t) => {
                 const ts = t.timestamp ? Date.parse(t.timestamp) : NaN;
                 return { ...t, ts };
             })
             .filter((t) => Number.isFinite(t.ts))
             .sort((a, b) => a.ts - b.ts);
-
-/*        const cutoff = Date.now() - WINDOW_MS;
-        return mapped.filter((d) => d.ts >= cutoff);*/
-        return mapped;
     }, [telemetryRows]);
+
+    const latest = useMemo(() => {
+        if (!data.length) return null;
+        return data[data.length - 1];
+    }, [data]);
 
     if (!selected) {
         return (
             <div className="w-full h-full min-h-[calc(100vh-72px-56px)] flex items-center justify-center">
-                <div className="text-sm text-base-content/60">
+                <div className="text-sm text-white/50">
                     Select a turbine to begin monitoring
                 </div>
             </div>
@@ -50,77 +42,101 @@ export default function Monitor() {
     }
 
     return (
-        <div className="grid grid-cols-2 gap-4">
-            <Chart title="Wind Speed (m/s)" isLoading={telemetryLoading} error={telemetryError}>
-                <ResponsiveContainer width="100%" height={240}>
-                    <LineChart data={data}>
-                        <CartesianGrid strokeDasharray="3 3" opacity={0.15} />
-                        <XAxis
-                            dataKey="ts"
-                            type="number"
-                            domain={["dataMin", "dataMax"]}
-                            tick={{ fontSize: 10 }}
-                            tickFormatter={(v) => new Date(Number(v)).toLocaleTimeString()}
-                        />
-                        <YAxis domain={["auto", "auto"]} />
-                        <Tooltip labelFormatter={(v) => new Date(Number(v)).toLocaleTimeString()} />
-                        <Line
-                            type="linear"
-                            dataKey="windSpeed"
-                            dot={false}
-                            strokeWidth={2}
-                            isAnimationActive={false}
-                        />
-                    </LineChart>
-                </ResponsiveContainer>
-            </Chart>
+        <div className="space-y-4">
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+                <MetricChart
+                    title="Wind Speed"
+                    data={data}
+                    dataKey="windSpeed"
+                    unit="m/s"
+                    isLoading={telemetryLoading}
+                    error={telemetryError}
+                />
 
-            <Chart title="Power Output (kW)" isLoading={telemetryLoading} error={telemetryError}>
-                <ResponsiveContainer width="100%" height={240}>
-                    <LineChart data={data}>
-                        <CartesianGrid strokeDasharray="3 3" opacity={0.15} />
-                        <XAxis
-                            dataKey="ts"
-                            type="number"
-                            domain={["dataMin", "dataMax"]}
-                            tick={{ fontSize: 10 }}
-                            tickFormatter={(v) => new Date(Number(v)).toLocaleTimeString()}
-                        />
-                        <YAxis domain={["auto", "auto"]} />
-                        <Tooltip labelFormatter={(v) => new Date(Number(v)).toLocaleTimeString()} />
-                        <Line
-                            type="linear"
-                            dataKey="powerOutput"
-                            dot={false}
-                            strokeWidth={2}
-                            isAnimationActive={false}
-                        />
-                    </LineChart>
-                </ResponsiveContainer>
-            </Chart>
-        </div>
-    );
-}
+                <MetricChart
+                    title="Power Output"
+                    data={data}
+                    dataKey="powerOutput"
+                    unit="kW"
+                    isLoading={telemetryLoading}
+                    error={telemetryError}
+                />
 
-function Chart({
-                   title,
-                   children,
-                   isLoading,
-                   error,
-               }: {
-    title: string;
-    children: React.ReactNode;
-    isLoading?: boolean;
-    error?: string | null;
-}) {
-    return (
-        <div className="rounded-2xl border border-base-300/30 bg-base-100/20 p-4">
-            <div className="mb-2 flex items-center justify-between">
-                <div className="font-semibold opacity-80">{title}</div>
-                {isLoading && <div className="text-xs text-base-content/50">Loading...</div>}
+                <MetricChart
+                    title="Rotor Speed"
+                    data={data}
+                    dataKey="rotorSpeed"
+                    unit="rpm"
+                    isLoading={telemetryLoading}
+                    error={telemetryError}
+                />
+
+                <MetricChart
+                    title="Ambient Temperature"
+                    data={data}
+                    dataKey="ambientTemperature"
+                    unit="°C"
+                    isLoading={telemetryLoading}
+                    error={telemetryError}
+                />
+
+                <MetricChart
+                    title="Wind Direction"
+                    data={data}
+                    dataKey="windDirection"
+                    unit="°"
+                    isLoading={telemetryLoading}
+                    error={telemetryError}
+                />
+
+                <MetricChart
+                    title="Nacelle Direction"
+                    data={data}
+                    dataKey="nacelleDirection"
+                    unit="°"
+                    isLoading={telemetryLoading}
+                    error={telemetryError}
+                />
+
+                <MetricChart
+                    title="Blade Pitch"
+                    data={data}
+                    dataKey="bladePitch"
+                    unit="°"
+                    isLoading={telemetryLoading}
+                    error={telemetryError}
+                />
+
+                <MetricChart
+                    title="Generator Temperature"
+                    data={data}
+                    dataKey="generatorTemp"
+                    unit="°C"
+                    isLoading={telemetryLoading}
+                    error={telemetryError}
+                />
+
+                <MetricChart
+                    title="Gearbox Temperature"
+                    data={data}
+                    dataKey="gearboxTemp"
+                    unit="°C"
+                    isLoading={telemetryLoading}
+                    error={telemetryError}
+                />
+
+                <MetricChart
+                    title="Vibration"
+                    data={data}
+                    dataKey="vibration"
+                    isLoading={telemetryLoading}
+                    error={telemetryError}
+                />
             </div>
-            {error ? <div className="mb-2 text-sm text-error">{error}</div> : null}
-            {children}
+
+            <div className="max-w-[260px]">
+                <StatusCard value={latest?.status ? String(latest.status) : "—"} />
+            </div>
         </div>
     );
 }

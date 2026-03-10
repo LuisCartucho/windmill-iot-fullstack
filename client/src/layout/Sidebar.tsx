@@ -16,7 +16,6 @@ export default function Sidebar({
                                     turbines,
                                     selected,
                                     onSelect,
-                                    latestByTurbine,
                                 }: Props) {
     return (
         <aside className="h-full p-5 border-r border-base-300/40 bg-base-100">
@@ -33,7 +32,6 @@ export default function Sidebar({
 
             <div className="flex flex-col gap-2">
                 {turbines.map((t: TurbineItem) => {
-                    const latest = latestByTurbine[t.id];
                     const isSelected = selected === t.id;
 
                     return (
@@ -55,15 +53,6 @@ export default function Sidebar({
                                     </div>
                                 </div>
                                 <div className="mt-1 h-3 w-3 rounded-full bg-emerald-400" />
-                            </div>
-
-                            <div className="mt-4 flex items-end justify-between text-sm">
-                                <div className="text-base-content/70">
-                                    Wind: {latest?.windSpeed?.toFixed(1) ?? "—"} m/s
-                                </div>
-                                <div className="font-semibold text-base-content/80">
-                                    {latest?.powerOutput?.toFixed(0) ?? "—"} kW
-                                </div>
                             </div>
                         </button>
                     );

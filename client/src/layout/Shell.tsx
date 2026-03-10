@@ -54,7 +54,6 @@ export default function Shell() {
                 turbines={TURBINES}
                 selected={selected ?? undefined}
                 onSelect={(id) => {
-                    console.log("[Shell] selected", id);
                     setSelected(id);
                 }}
                 latestByTurbine={{}}
@@ -91,13 +90,13 @@ function SelectedTurbineData({
         rows: telemetryRows,
         isLoading: telemetryLoading,
         error: telemetryError,
-    } = useTelemetry(undefined, selected ?? undefined, 50);
+    } = useTelemetry(undefined, selected ?? undefined, 20);
 
     const {
         alerts,
         isLoading: alertsLoading,
         error: alertsError,
-    } = useAlerts(undefined, selected ?? undefined, 50);
+    } = useAlerts(undefined, selected ?? undefined, 20);
 
     return (
         <SelectedTurbine.Provider
