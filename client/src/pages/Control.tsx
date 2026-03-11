@@ -4,34 +4,45 @@ import { apiFetch } from "../api/http";
 import {
     Play,
     Square,
-    RotateCcw,
-    Wrench,
+    TimerReset,
+    Wind,
     AlertTriangle,
 } from "lucide-react";
 
 export default function Control() {
     const { selected, farmId } = useContext(SelectedTurbine);
-    const [busy, setBusy] = useState<string | null>(null);
-    const [message, setMessage] = useState<string>("");
-    const [error, setError] = useState<string>("");
 
-    async function sendCommand(cmd: string) {
-        if (!selected || !farmId) return;
+    const [busy, setBusy] = useState<string | null>(null);
+    const [message, setMessage] = useState("");
+    const [error, setError] = useState("");
+
+    const [intervalValue, setIntervalValue] = useState(10);
+    const [pitchAngle, setPitchAngle] = useState(15);
+
+    async function sendCommand(
+        cmd: string,
+        extra?: Record<string, unknown>
+    ) {
+        if (!selected || !farmId || busy) return;
 
         try {
             setBusy(cmd);
             setError("");
             setMessage("");
 
-            const res = await apiFetch(`/api/farms/${farmId}/turbines/${selected}/command`, {
-                method: "POST",
-                body: JSON.stringify({ command: cmd }),
-            });
+            await apiFetch(
+                `/api/farms/${encodeURIComponent(farmId)}/turbines/${encodeURIComponent(selected)}/command`,
+                {
+                    method: "POST",
+                    body: JSON.stringify({
+                        command: cmd,
+                        ...(extra ?? {}),
+                    }),
+                }
+            );
 
-            console.log("Command response:", res);
             setMessage(`Command "${cmd}" sent successfully to ${selected}.`);
         } catch (err: any) {
-            console.error(err);
             setError(err?.message ?? `Failed to send "${cmd}" command.`);
         } finally {
             setBusy(null);
@@ -39,10 +50,9 @@ export default function Control() {
     }
 
     const disabled = !selected || !farmId || busy !== null;
-    console.log("selected:", selected, "farmId:", farmId, "busy:", busy);
 
     return (
-        <div className="w-full max-w-3xl">
+        <div className="w-full max-w-4xl">
             <div className="mb-6">
                 <h2 className="text-3xl font-semibold text-white">Control</h2>
                 <p className="mt-2 text-white/55">
@@ -59,7 +69,7 @@ export default function Control() {
                     </p>
                 </div>
 
-                <div className="p-6">
+                <div className="space-y-6 p-6">
                     <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                         <button
                             onClick={() => sendCommand("start")}
@@ -73,38 +83,82 @@ export default function Control() {
                         </button>
 
                         <button
-                            onClick={() => sendCommand("stop")}
+                            onClick={() => sendCommand("stop", { reason: "maintenance" })}
                             disabled={disabled}
                             className="flex h-16 items-center justify-start gap-3 rounded-xl border border-red-400/20 bg-red-600 px-5 text-left text-white transition hover:bg-red-500 disabled:cursor-not-allowed disabled:opacity-50"
                         >
                             <Square size={18} />
                             <span className="font-medium">
-                                {busy === "stop" ? "Stopping..." : "Emergency Stop"}
+                                {busy === "stop" ? "Stopping..." : "Stop Turbine"}
                             </span>
                         </button>
+                    </div>
 
-                        <button
-                            disabled
-                            className="flex h-16 items-center justify-start gap-3 rounded-xl border border-blue-400/10 bg-blue-600/40 px-5 text-left text-white/60 opacity-60 cursor-not-allowed"
-                        >
-                            <RotateCcw size={18} />
-                            <span className="font-medium">
-                                Reset System (unsupported)
-                            </span>
-                        </button>
+                    <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                        <div className="rounded-2xl border border-white/10 bg-black/20 p-5">
+                            <div className="mb-4 flex items-center gap-3 text-white">
+                                <TimerReset size={18} />
+                                <h3 className="text-lg font-medium">Set Interval</h3>
+                            </div>
 
-                        <button
-                            onClick={() => sendCommand("maintenance")}
-                            disabled={disabled}
-                            className="flex h-16 items-center justify-start gap-3 rounded-xl border border-white/10 bg-white/15 px-5 text-left text-white transition hover:bg-white/20 disabled:cursor-not-allowed disabled:opacity-50"
-                        >
-                            <Wrench size={18} />
-                            <span className="font-medium">
-                                {busy === "maintenance"
-                                    ? "Switching..."
-                                    : "Maintenance Mode"}
-                            </span>
-                        </button>
+                            <label className="mb-2 block text-sm text-white/60">
+                                Interval (1–60 seconds)
+                            </label>
+
+                            <input
+                                type="number"
+                                min={1}
+                                max={60}
+                                value={intervalValue}
+                                onChange={(e) => setIntervalValue(Number(e.target.value))}
+                                disabled={disabled}
+                                className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-white outline-none transition focus:border-sky-400/50 disabled:cursor-not-allowed disabled:opacity-50"
+                            />
+
+                            <button
+                                onClick={() => sendCommand("setInterval", { value: intervalValue })}
+                                disabled={disabled}
+                                className="mt-4 flex h-12 w-full items-center justify-center gap-2 rounded-xl border border-sky-400/20 bg-sky-500/80 text-white transition hover:bg-sky-500 disabled:cursor-not-allowed disabled:opacity-50"
+                            >
+                                <TimerReset size={16} />
+                                <span className="font-medium">
+                                    {busy === "setInterval" ? "Updating..." : "Apply Interval"}
+                                </span>
+                            </button>
+                        </div>
+
+                        <div className="rounded-2xl border border-white/10 bg-black/20 p-5">
+                            <div className="mb-4 flex items-center gap-3 text-white">
+                                <Wind size={18} />
+                                <h3 className="text-lg font-medium">Set Pitch</h3>
+                            </div>
+
+                            <label className="mb-2 block text-sm text-white/60">
+                                Blade pitch angle (0–30°)
+                            </label>
+
+                            <input
+                                type="number"
+                                min={0}
+                                max={30}
+                                step={0.1}
+                                value={pitchAngle}
+                                onChange={(e) => setPitchAngle(Number(e.target.value))}
+                                disabled={disabled}
+                                className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-white outline-none transition focus:border-sky-400/50 disabled:cursor-not-allowed disabled:opacity-50"
+                            />
+
+                            <button
+                                onClick={() => sendCommand("setPitch", { angle: pitchAngle })}
+                                disabled={disabled}
+                                className="mt-4 flex h-12 w-full items-center justify-center gap-2 rounded-xl border border-violet-400/20 bg-violet-500/80 text-white transition hover:bg-violet-500 disabled:cursor-not-allowed disabled:opacity-50"
+                            >
+                                <Wind size={16} />
+                                <span className="font-medium">
+                                    {busy === "setPitch" ? "Updating..." : "Apply Pitch"}
+                                </span>
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -129,9 +183,8 @@ export default function Control() {
                             Operator Protocol
                         </p>
                         <p className="mt-1 text-sm leading-6 text-sky-200/80">
-                            All commands are logged with your username and timestamp.
-                            Unauthorized actions are strictly prohibited and monitored
-                            by security systems.
+                            All commands are validated server side and logged with
+                            operator identity and timestamp.
                         </p>
                     </div>
                 </div>

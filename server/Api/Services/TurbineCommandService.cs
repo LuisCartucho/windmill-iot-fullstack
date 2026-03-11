@@ -10,7 +10,6 @@ public class TurbineCommandService
     private readonly IConfiguration _config;
     private readonly WindFarmDbContext _db;
 
-    // Your project farm
     private const string ProjectFarmId = "Wind-Iot-JIANLUI";
 
     public TurbineCommandService(IConfiguration config, WindFarmDbContext db)
@@ -22,8 +21,11 @@ public class TurbineCommandService
     public async Task<(bool ok, string? error)> SendCommandAsync(
         string? farmId,
         string turbineId,
-        string command,
-        string? username)
+        string? command,
+        string? username,
+        int? value = null,
+        double? angle = null,
+        string? reason = null)
     {
         var host = _config["Mqtt:Host"] ?? _config["Mqtt__Host"];
         var portRaw = _config["Mqtt:Port"] ?? _config["Mqtt__Port"];
@@ -36,6 +38,12 @@ public class TurbineCommandService
         if (string.IsNullOrWhiteSpace(turbineId))
             return (false, "Turbine ID is required");
 
+        if (string.IsNullOrWhiteSpace(command))
+            return (false, "Command is required");
+
+        if (string.IsNullOrWhiteSpace(username))
+            return (false, "Authenticated user is required");
+
         var port = 1883;
         if (!string.IsNullOrWhiteSpace(portRaw) && int.TryParse(portRaw, out var parsedPort))
             port = parsedPort;
@@ -47,7 +55,7 @@ public class TurbineCommandService
         object payload;
         string actionToStore;
 
-        switch (command.ToLowerInvariant())
+        switch (command.Trim().ToLowerInvariant())
         {
             case "start":
                 actionToStore = "start";
@@ -62,21 +70,33 @@ public class TurbineCommandService
                 payload = new
                 {
                     action = "stop",
-                    reason = "emergency"
+                    reason = string.IsNullOrWhiteSpace(reason) ? "maintenance" : reason
                 };
                 break;
 
-            case "maintenance":
-                actionToStore = "maintenance";
+            case "setinterval":
+                if (value is null || value < 1 || value > 60)
+                    return (false, "Value must be between 1 and 60 for setInterval");
+
+                actionToStore = "setInterval";
                 payload = new
                 {
-                    action = "stop",
-                    reason = "maintenance"
+                    action = "setInterval",
+                    value = value.Value
                 };
                 break;
 
-            case "reset":
-                return (false, "Reset is not supported by the IoT system");
+            case "setpitch":
+                if (angle is null || angle < 0 || angle > 30)
+                    return (false, "Angle must be between 0 and 30 for setPitch");
+
+                actionToStore = "setPitch";
+                payload = new
+                {
+                    action = "setPitch",
+                    angle = angle.Value
+                };
+                break;
 
             default:
                 return (false, "Invalid command");
@@ -111,7 +131,7 @@ public class TurbineCommandService
             Id = Guid.NewGuid(),
             FarmId = effectiveFarmId,
             TurbineId = turbineId,
-            UserId = string.IsNullOrWhiteSpace(username) ? "admin" : username,
+            UserId = username,
             Timestamp = DateTime.UtcNow,
             Action = actionToStore,
             Payload = payloadJson
@@ -119,10 +139,6 @@ public class TurbineCommandService
 
         _db.Commands.Add(commandRow);
         await _db.SaveChangesAsync();
-
-        Console.WriteLine(
-            $"MQTT command sent by {username ?? "unknown"} to farm={effectiveFarmId}, turbine={turbineId}: {payloadJson}"
-        );
 
         return (true, null);
     }

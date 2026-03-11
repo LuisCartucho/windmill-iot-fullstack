@@ -9,6 +9,7 @@ using Microsoft.IdentityModel.Tokens;
 using Mqtt.Controllers;
 using StateleSSE.AspNetCore;
 using StateleSSE.AspNetCore.GroupRealtime;
+using System.Security.Claims;
 
 var env = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Development";
 var envFile = $".env.{env.ToLower()}";
@@ -22,7 +23,9 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Configuration.AddEnvironmentVariables();
 builder.Services.AddControllers();
-
+// =======================
+// Authentication + JWT
+// =======================
 var jwtKey = builder.Configuration["Jwt__Key"] ?? builder.Configuration["Jwt:Key"];
 if (string.IsNullOrWhiteSpace(jwtKey))
     throw new InvalidOperationException("JWT key missing (Jwt__Key)");
@@ -42,8 +45,50 @@ builder.Services
             )
         };
     });
+// =======================
+// Authorization Policies
+// =======================
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("AdminOnly", policy =>
+        policy.RequireAssertion(context =>
+        {
+            var userId =
+                context.User.FindFirst(ClaimTypes.Name)?.Value ??
+                context.User.FindFirst(ClaimTypes.NameIdentifier)?.Value ??
+                context.User.FindFirst("sub")?.Value ??
+                context.User.FindFirst("unique_name")?.Value ??
+                context.User.Identity?.Name;
 
-builder.Services.AddAuthorization();
+            return userId == "admin";
+        }));
+
+    options.AddPolicy("OperatorOnly", policy =>
+        policy.RequireAssertion(context =>
+        {
+            var userId =
+                context.User.FindFirst(ClaimTypes.Name)?.Value ??
+                context.User.FindFirst(ClaimTypes.NameIdentifier)?.Value ??
+                context.User.FindFirst("sub")?.Value ??
+                context.User.FindFirst("unique_name")?.Value ??
+                context.User.Identity?.Name;
+
+            return userId == "operator";
+        }));
+
+    options.AddPolicy("OperatorOrAdmin", policy =>
+        policy.RequireAssertion(context =>
+        {
+            var userId =
+                context.User.FindFirst(ClaimTypes.Name)?.Value ??
+                context.User.FindFirst(ClaimTypes.NameIdentifier)?.Value ??
+                context.User.FindFirst("sub")?.Value ??
+                context.User.FindFirst("unique_name")?.Value ??
+                context.User.Identity?.Name;
+
+            return userId == "admin" || userId == "operator";
+        }));
+});
 
 // OpenAPI (NSwag)
 builder.Services.AddOpenApiDocument();
@@ -67,7 +112,9 @@ builder.Services.AddDbContext<WindFarmDbContext>((sp, options) =>
 });
 
 builder.Services.AddMqttControllers();
-
+// =======================
+// CORS
+// =======================
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("dev", policy =>
@@ -81,7 +128,9 @@ builder.Services.AddCors(options =>
             .AllowCredentials();
     });
 });
-
+// =======================
+// Services
+// =======================
 builder.Services.AddScoped<AuthService>();
 builder.Services.AddHostedService<TelemetryCleanupService>();
 builder.Services.AddScoped<TurbineCommandService>();

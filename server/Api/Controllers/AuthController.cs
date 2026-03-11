@@ -1,5 +1,6 @@
 ﻿using Api.Services;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 
 namespace Api.Controllers;
 
@@ -19,9 +20,18 @@ public class AuthController(AuthService auth) : ControllerBase
     }
 
     [HttpPost("seed-admin")]
+    [Authorize(Policy = "AdminOnly")]
     public async Task<IActionResult> SeedAdmin()
     {
         var msg = await auth.SeedAdminAsync();
+        return Ok(msg);
+    }
+    
+    [HttpPost("seed-operator")]
+    [Authorize(Policy = "AdminOnly")]
+    public async Task<IActionResult> SeedOperator()
+    {
+        var msg = await auth.SeedOperatorAsync();
         return Ok(msg);
     }
 }

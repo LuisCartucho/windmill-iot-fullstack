@@ -56,6 +56,30 @@ public class AuthService(WindFarmDbContext db, IConfiguration config)
         await db.SaveChangesAsync();
         return "Created admin user";
     }
+    
+    public async Task<string> SeedOperatorAsync()
+    {
+        var id = "operator";
+        if (await db.Users.AnyAsync(u => u.Id == id))
+            return "operator already exists";
+
+        var pwd = config["SeedOperator__Password"];
+        if (string.IsNullOrWhiteSpace(pwd))
+            return "SeedOperator__Password missing in env/config";
+
+        var (saltB64, hashB64) = HashPassword(pwd);
+
+        db.Users.Add(new User
+        {
+            Id = id,
+            Nickname = "Operator",
+            Salt = saltB64,
+            Hash = hashB64
+        });
+
+        await db.SaveChangesAsync();
+        return "Created operator user";
+    }
 
     private static (string saltB64, string hashB64) HashPassword(string password)
     {

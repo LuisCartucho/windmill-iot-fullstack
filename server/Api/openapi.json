@@ -60,6 +60,27 @@
         }
       }
     },
+    "/api/auth/seed-operator": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "operationId": "Auth_SeedOperator",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/octet-stream": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/Commands": {
       "get": {
         "tags": [
@@ -399,7 +420,22 @@
         "additionalProperties": false,
         "properties": {
           "command": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
+          },
+          "value": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "angle": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "reason": {
+            "type": "string",
+            "nullable": true
           }
         }
       },

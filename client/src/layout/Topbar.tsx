@@ -35,9 +35,9 @@ export default function Topbar() {
                     <span className="text-sm font-semibold text-base-content/80">Live System</span>
                 </div>
 
-                {/* Operator */}
+                {/* User */}
                 <div className="text-sm text-base-content/60">
-                    Operator:{" "}
+                    User:{" "}
                     <span className="font-bold text-base-content">
                         {nickname ?? "unknown"}
                     </span>

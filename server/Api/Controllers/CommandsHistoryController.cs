@@ -1,11 +1,13 @@
 ﻿using DataAccess;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Authorization;
 
 namespace Api.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize(Policy = "OperatorOrAdmin")]
 public class CommandsController(WindFarmDbContext db) : ControllerBase
 {
     [HttpGet]

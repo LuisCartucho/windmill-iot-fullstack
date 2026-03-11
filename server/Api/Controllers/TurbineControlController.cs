@@ -17,26 +17,34 @@ public class TurbineControlController : ControllerBase
         _commandService = commandService;
     }
 
-    [Authorize]
     [HttpPost("{turbineId}/command")]
+    [Authorize(Policy = "OperatorOnly")]
     public async Task<IActionResult> SendCommand(
         string farmId,
         string turbineId,
         [FromBody] TurbineCommandDto dto)
     {
+        if (dto is null || string.IsNullOrWhiteSpace(dto.Command))
+            return BadRequest(new { error = "Command is required" });
+
         var username =
             User.FindFirst(ClaimTypes.Name)?.Value ??
             User.FindFirst(ClaimTypes.NameIdentifier)?.Value ??
             User.FindFirst("sub")?.Value ??
             User.FindFirst("unique_name")?.Value ??
-            User.FindFirst("nickname")?.Value ??
             User.Identity?.Name;
+
+        if (string.IsNullOrWhiteSpace(username))
+            return Unauthorized();
 
         var (ok, error) = await _commandService.SendCommandAsync(
             farmId,
             turbineId,
             dto.Command,
-            username);
+            username,
+            dto.Value,
+            dto.Angle,
+            dto.Reason);
 
         if (!ok)
             return BadRequest(new { error });

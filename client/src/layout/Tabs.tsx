@@ -1,6 +1,7 @@
 import type { ComponentType } from "react";
 import { NavLink } from "react-router-dom";
 import { Activity, SlidersHorizontal, AlertTriangle, History } from "lucide-react";
+import { isOperator } from "../api/http";
 
 type TabLinkProps = {
     to: string;
@@ -32,12 +33,16 @@ function TabLink({ to, Icon, label, end = false }: TabLinkProps) {
 }
 
 export default function Tabs() {
+    const canAccessControl = isOperator();
+
     return (
         <div className="flex items-center gap-4 border-b border-base-300/30">
             <TabLink to="/app/monitor" Icon={Activity} label="Monitor" />
-            <TabLink to="/app/control" Icon={SlidersHorizontal} label="Control" />
             <TabLink to="/app/alerts" Icon={AlertTriangle} label="Alerts" />
-            <TabLink to="/app/history" Icon={History} label="Action History" />
+            {canAccessControl && (
+                <TabLink to="/app/control" Icon={SlidersHorizontal} label="Control" />
+            )}
+            <TabLink to="/app/history" Icon={History} label="Command History" />
         </div>
     );
 }
