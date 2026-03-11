@@ -38,11 +38,16 @@ export const SelectedTurbine = createContext<SelectedTurbineContextValue>({
     alertsError: null,
 });
 
+const FARM = {
+    id: "Wind-Iot-JIANLUI",
+    name: "Wind-Iot-JIANLUI",
+};
+
 const TURBINES = [
-    { id: "turbine-alpha", name: "Alpha" },
-    { id: "turbine-beta", name: "Beta" },
-    { id: "turbine-gamma", name: "Gamma" },
-    { id: "turbine-delta", name: "Delta" },
+    { id: "turbine-alpha", name: "Alpha", location: "North Platform" },
+    { id: "turbine-beta", name: "Beta", location: "North Platform" },
+    { id: "turbine-gamma", name: "Gamma", location: "South Platform" },
+    { id: "turbine-delta", name: "Delta", location: "East Platform" },
 ];
 
 export default function Shell() {
@@ -90,20 +95,20 @@ function SelectedTurbineData({
         rows: telemetryRows,
         isLoading: telemetryLoading,
         error: telemetryError,
-    } = useTelemetry(undefined, selected ?? undefined, 20);
+    } = useTelemetry(FARM.id, selected ?? undefined, 20);
 
     const {
         alerts,
         isLoading: alertsLoading,
         error: alertsError,
-    } = useAlerts(undefined, selected ?? undefined, 20);
+    } = useAlerts(FARM.id, selected ?? undefined, 20);
 
     return (
         <SelectedTurbine.Provider
             value={{
                 selected,
                 setSelected,
-                farmId: null,
+                farmId: FARM.id,
                 telemetryRows,
                 telemetryLoading,
                 telemetryError,

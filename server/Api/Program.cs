@@ -1,8 +1,11 @@
+using System.Text;
 using Api;
 using Api.Services;
 using DataAccess;
 using DotNetEnv;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using Mqtt.Controllers;
 using StateleSSE.AspNetCore;
 using StateleSSE.AspNetCore.GroupRealtime;
@@ -19,6 +22,28 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Configuration.AddEnvironmentVariables();
 builder.Services.AddControllers();
+
+var jwtKey = builder.Configuration["Jwt__Key"] ?? builder.Configuration["Jwt:Key"];
+if (string.IsNullOrWhiteSpace(jwtKey))
+    throw new InvalidOperationException("JWT key missing (Jwt__Key)");
+
+builder.Services
+    .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = false,
+            ValidateAudience = false,
+            ValidateIssuerSigningKey = true,
+            ValidateLifetime = true,
+            IssuerSigningKey = new SymmetricSecurityKey(
+                Encoding.UTF8.GetBytes(jwtKey)
+            )
+        };
+    });
+
+builder.Services.AddAuthorization();
 
 // OpenAPI (NSwag)
 builder.Services.AddOpenApiDocument();
@@ -59,19 +84,17 @@ builder.Services.AddCors(options =>
 
 builder.Services.AddScoped<AuthService>();
 builder.Services.AddHostedService<TelemetryCleanupService>();
+builder.Services.AddScoped<TurbineCommandService>();
 
 var app = builder.Build();
 
-// --- middleware order matters ---
 app.UseRouting();
 
 app.UseCors("dev");
 
-// If/when you add auth, keep these here:
-// app.UseAuthentication();
-// app.UseAuthorization();
+app.UseAuthentication();
+app.UseAuthorization();
 
-// Swagger is fine here
 app.UseOpenApi();
 app.UseSwaggerUi();
 

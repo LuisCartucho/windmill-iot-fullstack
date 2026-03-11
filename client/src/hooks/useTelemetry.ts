@@ -9,7 +9,7 @@ import {
 type LatestResponse = RealtimeListenResponseOfTelemetry;
 
 const API_BASE = import.meta.env.VITE_API_BASE as string | undefined;
-const DEFAULT_TAKE = 20;
+const DEFAULT_TAKE = 60;
 
 const telemetryCache = new Map<string, Telemetry[]>();
 
@@ -24,7 +24,11 @@ function cacheKey(farmId?: string, turbineId?: string, take?: number) {
 }
 
 function telemetryKey(t: Telemetry) {
-    return [normalizeTurbineId(t.turbineId), t.timestamp ?? ""].join("|");
+    return [
+        t.farmId ?? "",
+        normalizeTurbineId(t.turbineId),
+        t.timestamp ?? "",
+    ].join("|");
 }
 
 function dedupeTelemetry(items: Telemetry[]) {
@@ -84,7 +88,6 @@ export function useTelemetry(
         setError(null);
 
         let disposed = false;
-
         const abortController = new AbortController();
 
         const initialApi = new WebClientClient(API_BASE, {
@@ -108,10 +111,12 @@ export function useTelemetry(
                 if (disposed || requestIdRef.current !== requestId) return;
 
                 const filtered = (initial ?? []).filter(
-                    (t) => normalizeTurbineId(t.turbineId) === selectedTurbine
+                    (t) =>
+                        normalizeTurbineId(t.turbineId) === selectedTurbine &&
+                        (!farmId || t.farmId === farmId)
                 );
 
-                const next = dedupeTelemetry(filtered);
+                const next = dedupeTelemetry(filtered).slice(-take);
                 telemetryCache.set(key, next);
                 setRows(next);
                 setIsLoading(false);
@@ -155,8 +160,8 @@ export function useTelemetry(
                                 : null;
 
                     if (!incoming?.timestamp) return;
-
                     if (normalizeTurbineId(incoming.turbineId) !== selectedTurbine) return;
+                    if (farmId && incoming.farmId !== farmId) return;
 
                     setRows((prev) => {
                         const next = dedupeTelemetry([...prev, incoming]).slice(-take);
@@ -179,8 +184,9 @@ export function useTelemetry(
                     stopRef.current = stop;
                 }
             })
-            .catch(() => {
+            .catch((err) => {
                 if (disposed || requestIdRef.current !== requestId) return;
+                console.error("SSE listen failed:", err);
             });
 
         return () => {

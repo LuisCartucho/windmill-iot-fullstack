@@ -5,8 +5,8 @@ import Control from "../pages/Control";
 import Alerts from "../pages/Alerts";
 import ActionHistory from "../pages/ActionHistory";
 import Login from "../pages/Login";
-import Dashboard from "../pages/Dashboard.jsx";
-import {ReactNode} from "react";
+import Dashboard from "../pages/Dashboard";
+import { ReactNode } from "react";
 
 function RequireAuth({ children }: { children: ReactNode }) {
     const token = localStorage.getItem("token");
@@ -15,10 +15,8 @@ function RequireAuth({ children }: { children: ReactNode }) {
 }
 
 const router = createBrowserRouter([
-    // Public
-    { path: "/login", element: <Login /> },
+    { path: "/login", element: <Login /> },  // Public Login Route
 
-    // Protected area
     {
         path: "/app/*",
         element: (
@@ -27,19 +25,17 @@ const router = createBrowserRouter([
             </RequireAuth>
         ),
         children: [
-            { index: true, element: <Dashboard /> },          // /app (default)
-            { path: "monitor", element: <Monitor /> },        // /app/monitor
-            { path: "control", element: <Control /> },        // /app/control
-            { path: "alerts", element: <Alerts /> },          // /app/alerts
-            { path: "history", element: <ActionHistory /> },  // /app/history
+            { index: true, element: <Dashboard /> },         // /app (default route)
+            { path: "monitor", element: <Monitor /> },       // /app/monitor
+            { path: "control", element: <Control /> },       // /app/control
+            { path: "alerts", element: <Alerts /> },         // /app/alerts
+            { path: "history", element: <ActionHistory /> }, // /app/history
         ],
     },
 
-    // Root -> go to app
-    { path: "/", element: <Navigate to="/app" replace /> },
+    { path: "/", element: <Navigate to="/app" replace /> },  // Redirect from root to /app
 
-    // Unknown -> go to login (or /app, your choice)
-    { path: "*", element: <Navigate to="/login" replace /> },
+    { path: "*", element: <Navigate to="/login" replace /> }, // Redirect from any undefined route to login
 ]);
 
 export default function App() {

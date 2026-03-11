@@ -13,10 +13,17 @@ public class IotMqttController(
 ) : MqttController
 {
     private static readonly TimeSpan AlertCooldown = TimeSpan.FromMinutes(10);
+    private const string ProjectFarmId = "Wind-Iot-JIANLUI";
 
     [MqttRoute("farm/{farmId}/windmill/{turbineId}/telemetry")]
     public async Task ListenTelemetry(TelemetryMessageDto msg, string farmId, string turbineId)
     {
+        if (!string.Equals(farmId, ProjectFarmId, StringComparison.OrdinalIgnoreCase))
+        {
+            logger.LogInformation("Ignoring telemetry for farm {FarmId}", farmId);
+            return;
+        }
+
         logger.LogInformation("MQTT telemetry: {Json}", JsonSerializer.Serialize(msg));
 
         var timestamp = msg.Timestamp == default ? DateTime.UtcNow : msg.Timestamp;
@@ -43,13 +50,23 @@ public class IotMqttController(
 
         db.Telemetries.Add(entity);
 
-        await TryCreateAlertAsync(farmId, turbineId, timestamp, "warning",
+        await TryCreateAlertAsync(
+            farmId,
+            turbineId,
+            timestamp,
+            "warning",
             msg.GeneratorTemp > 65,
-            "Generator temperature elevated");
+            "Generator temperature elevated"
+        );
 
-        await TryCreateAlertAsync(farmId, turbineId, timestamp, "warning",
+        await TryCreateAlertAsync(
+            farmId,
+            turbineId,
+            timestamp,
+            "warning",
             string.Equals(msg.Status, "stopped", StringComparison.OrdinalIgnoreCase),
-            "Turbine stopped unexpectedly");
+            "Turbine stopped unexpectedly"
+        );
 
         await db.SaveChangesAsync();
     }
@@ -57,6 +74,12 @@ public class IotMqttController(
     [MqttRoute("farm/{farmId}/windmill/{turbineId}/alert")]
     public async Task ListenAlert(AlertMessageDto msg, string farmId, string turbineId)
     {
+        if (!string.Equals(farmId, ProjectFarmId, StringComparison.OrdinalIgnoreCase))
+        {
+            logger.LogInformation("Ignoring alert for farm {FarmId}", farmId);
+            return;
+        }
+
         logger.LogWarning("ALERT RECEIVED for {TurbineId}: {Message}", turbineId, msg.Message);
         logger.LogInformation("MQTT alert: {Json}", JsonSerializer.Serialize(msg));
 

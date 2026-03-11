@@ -13,13 +13,9 @@ public partial class WindFarmDbContext : DbContext
     public virtual DbSet<Alert> Alerts { get; set; }
 
     public virtual DbSet<Command> Commands { get; set; }
-
-    public virtual DbSet<Farm> Farms { get; set; }
-
+    
     public virtual DbSet<Telemetry> Telemetries { get; set; }
-
-    public virtual DbSet<Turbine> Turbines { get; set; }
-
+    
     public virtual DbSet<User> Users { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -36,11 +32,12 @@ public partial class WindFarmDbContext : DbContext
             entity.ToTable("Commands", "iot_windfarm");
 
             entity.Property(e => e.Id).ValueGeneratedNever();
-        });
 
-        modelBuilder.Entity<Farm>(entity =>
-        {
-            entity.ToTable("Farms", "iot_windfarm");
+            // Add the foreign key relationship here
+            entity.HasOne(c => c.User)  // Command has one User
+                .WithMany()  // Assuming that User doesn't have a reverse navigation property to Command
+                .HasForeignKey(c => c.UserId)  // Foreign key in Command table
+                .OnDelete(DeleteBehavior.Cascade); // Optional: Cascade delete when User is deleted
         });
 
         modelBuilder.Entity<Telemetry>(entity =>
@@ -48,11 +45,6 @@ public partial class WindFarmDbContext : DbContext
             entity.ToTable("Telemetry", "iot_windfarm");
 
             entity.Property(e => e.Id).ValueGeneratedNever();
-        });
-
-        modelBuilder.Entity<Turbine>(entity =>
-        {
-            entity.ToTable("Turbines", "iot_windfarm");
         });
 
         modelBuilder.Entity<User>(entity =>
