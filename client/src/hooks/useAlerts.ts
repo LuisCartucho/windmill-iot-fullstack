@@ -57,6 +57,7 @@ export function useAlerts(
 
     const requestIdRef = useRef(0);
     const stopRef = useRef<(() => void) | null>(null);
+    const sseRef = useRef<StateleSSEClient | null>(null);
 
     useEffect(() => {
         if (!API_BASE) {
@@ -65,17 +66,26 @@ export function useAlerts(
             return;
         }
 
+        if (!sseRef.current) {
+            sseRef.current = new StateleSSEClient(`${API_BASE}/api/WebClient/sse`);
+        }
+
         if (!turbineId) {
-            stopRef.current?.();
-            stopRef.current = null;
+            if (stopRef.current) {
+                stopRef.current();
+                stopRef.current = null;
+            }
+
             setAlerts([]);
             setIsLoading(false);
             setError(null);
             return;
         }
 
-        stopRef.current?.();
-        stopRef.current = null;
+        if (stopRef.current) {
+            stopRef.current();
+            stopRef.current = null;
+        }
 
         requestIdRef.current += 1;
         const requestId = requestIdRef.current;
@@ -89,6 +99,7 @@ export function useAlerts(
         setError(null);
 
         let disposed = false;
+        let localStop: (() => void) | null = null;
 
         const abortController = new AbortController();
 
@@ -116,7 +127,7 @@ export function useAlerts(
                     (a) => normalizeTurbineId(a.turbineId) === selectedTurbine
                 );
 
-                const next = dedupeAlerts(filtered);
+                const next = dedupeAlerts(filtered).slice(0, take);
                 alertsCache.set(key, next);
                 setAlerts(next);
                 setIsLoading(false);
@@ -130,10 +141,8 @@ export function useAlerts(
             }
         })();
 
-        const sse = new StateleSSEClient(`${API_BASE}/api/WebClient/sse`);
-
         void Promise.resolve(
-            sse.listen(
+            sseRef.current.listen(
                 async (connectionId) => {
                     const latest = await liveApi.getAlertLatest(
                         connectionId,
@@ -160,7 +169,6 @@ export function useAlerts(
                                 : null;
 
                     if (!incoming?.timestamp) return;
-
                     if (normalizeTurbineId(incoming.turbineId) !== selectedTurbine) return;
 
                     setAlerts((prev) => {
@@ -175,25 +183,32 @@ export function useAlerts(
             )
         )
             .then((stop) => {
-                if (disposed) {
+                if (disposed || requestIdRef.current !== requestId) {
                     if (typeof stop === "function") stop();
                     return;
                 }
 
                 if (typeof stop === "function") {
+                    localStop = stop;
                     stopRef.current = stop;
                 }
             })
-            .catch(() => {
+            .catch((err) => {
                 if (disposed || requestIdRef.current !== requestId) return;
+                console.error("Alerts SSE listen failed:", err);
             });
 
         return () => {
             disposed = true;
             abortController.abort();
 
-            if (stopRef.current) {
+            if (localStop) {
+                localStop();
+            } else if (stopRef.current) {
                 stopRef.current();
+            }
+
+            if (stopRef.current === localStop) {
                 stopRef.current = null;
             }
         };

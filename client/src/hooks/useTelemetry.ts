@@ -56,6 +56,7 @@ export function useTelemetry(
 
     const requestIdRef = useRef(0);
     const stopRef = useRef<(() => void) | null>(null);
+    const sseRef = useRef<StateleSSEClient | null>(null);
 
     useEffect(() => {
         if (!API_BASE) {
@@ -64,17 +65,26 @@ export function useTelemetry(
             return;
         }
 
+        if (!sseRef.current) {
+            sseRef.current = new StateleSSEClient(`${API_BASE}/api/WebClient/sse`);
+        }
+
         if (!turbineId) {
-            stopRef.current?.();
-            stopRef.current = null;
+            if (stopRef.current) {
+                stopRef.current();
+                stopRef.current = null;
+            }
+
             setRows([]);
             setIsLoading(false);
             setError(null);
             return;
         }
 
-        stopRef.current?.();
-        stopRef.current = null;
+        if (stopRef.current) {
+            stopRef.current();
+            stopRef.current = null;
+        }
 
         requestIdRef.current += 1;
         const requestId = requestIdRef.current;
@@ -88,6 +98,8 @@ export function useTelemetry(
         setError(null);
 
         let disposed = false;
+        let localStop: (() => void) | null = null;
+
         const abortController = new AbortController();
 
         const initialApi = new WebClientClient(API_BASE, {
@@ -111,9 +123,7 @@ export function useTelemetry(
                 if (disposed || requestIdRef.current !== requestId) return;
 
                 const filtered = (initial ?? []).filter(
-                    (t) =>
-                        normalizeTurbineId(t.turbineId) === selectedTurbine &&
-                        (!farmId || t.farmId === farmId)
+                    (t) => normalizeTurbineId(t.turbineId) === selectedTurbine
                 );
 
                 const next = dedupeTelemetry(filtered).slice(-take);
@@ -130,10 +140,8 @@ export function useTelemetry(
             }
         })();
 
-        const sse = new StateleSSEClient(`${API_BASE}/api/WebClient/sse`);
-
         void Promise.resolve(
-            sse.listen(
+            sseRef.current.listen(
                 async (connectionId) => {
                     const latest = await liveApi.getTelemetryLatest(
                         connectionId,
@@ -161,7 +169,6 @@ export function useTelemetry(
 
                     if (!incoming?.timestamp) return;
                     if (normalizeTurbineId(incoming.turbineId) !== selectedTurbine) return;
-                    if (farmId && incoming.farmId !== farmId) return;
 
                     setRows((prev) => {
                         const next = dedupeTelemetry([...prev, incoming]).slice(-take);
@@ -175,26 +182,32 @@ export function useTelemetry(
             )
         )
             .then((stop) => {
-                if (disposed) {
+                if (disposed || requestIdRef.current !== requestId) {
                     if (typeof stop === "function") stop();
                     return;
                 }
 
                 if (typeof stop === "function") {
+                    localStop = stop;
                     stopRef.current = stop;
                 }
             })
             .catch((err) => {
                 if (disposed || requestIdRef.current !== requestId) return;
-                console.error("SSE listen failed:", err);
+                console.error("Telemetry SSE listen failed:", err);
             });
 
         return () => {
             disposed = true;
             abortController.abort();
 
-            if (stopRef.current) {
+            if (localStop) {
+                localStop();
+            } else if (stopRef.current) {
                 stopRef.current();
+            }
+
+            if (stopRef.current === localStop) {
                 stopRef.current = null;
             }
         };
