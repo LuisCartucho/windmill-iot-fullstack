@@ -2,6 +2,7 @@ import { useState } from "react";
 import { apiFetch, setAuthSession } from "../api/http";
 import { useNavigate } from "react-router";
 import { Eye, EyeOff } from "lucide-react";
+import logo from "../assets/logo.png"
 
 export default function Login() {
     const nav = useNavigate();
@@ -49,7 +50,12 @@ export default function Login() {
         <div className="grid min-h-screen w-full place-items-center bg-[#0b0c0e] p-6">
             <div className="w-full max-w-[420px] rounded-2xl border border-white/10 bg-white/5 p-7 shadow-2xl backdrop-blur-xl">
                 <div className="mx-auto mb-4 grid h-11 w-11 place-items-center rounded-xl border border-emerald-400/25 bg-emerald-400/10 text-emerald-400">
-                    <span className="text-lg">≋</span>
+                    <span className="text-lg">
+                        <img
+                        src={logo}
+                        alt="Windmill logo"
+                        className="h-full w-full object-contain"
+                    /></span>
                 </div>
 
                 <div className="text-center">

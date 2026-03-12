@@ -1,4 +1,5 @@
 import type { Telemetry } from "../generated-ts-client";
+import logo from "../assets/logo.png";
 
 type TurbineItem = {
     id: string;
@@ -21,7 +22,12 @@ export default function Sidebar({
         <aside className="h-full p-5 border-r border-base-300/40 bg-base-100">
             <div className="flex items-center gap-3 mb-5">
                 <div className="btn btn-sm btn-ghost rounded-xl px-3">
-                    <span className="text-md">≋</span>
+                    <span className="text-md">
+                        <img
+                        src={logo}
+                        alt="Windmill logo"
+                        className="h-16 w-auto object-contain"
+                    /></span>
                 </div>
                 <div className="font-bold text-md">Windmill Inspection Centre</div>
             </div>
